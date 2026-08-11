@@ -887,6 +887,7 @@ input{ -webkit-user-select:text; user-select:text; }
   <span class="keys">A hiiri</span>
   <span class="keys">B musta</span>
   <span class="keys">C kursori <b id="hudCur">NÄKYY</b></span>
+  <span class="keys">K kello <b id="hudKello">3:31 kiinteä</b></span>
   <span class="keys">V autovastaus <b id="hudReply">ON</b></span>
   <span class="keys">M ääni <b id="hudSound">ON</b></span>
   <span class="keys">R alku</span>
@@ -951,7 +952,7 @@ function hideAll(){ show(null); }
       (a.id==='klatter'||a.id==='backloggr' ? '<em data-count="'+a.id+'"></em>' : '')+
     '</div>').join('') +
     '<div id="tray"><span class="mono">⬤ 41 GB</span><span class="mono">GPU 71 %</span>'+
-    '<span id="clock" class="mono">2:58</span></div>';
+    '<span id="clock" class="mono">3:31</span></div>';
   tb.addEventListener('click', e=>{
     const ic = e.target.closest('.tbicon');
     if(ic){ stopFlurry(); show(ic.dataset.app); }
@@ -1032,36 +1033,52 @@ function blip(){                        // hiljaisempi: oma viesti lähti
 }
 
 /* ============================================================
-   KELLO
+   KELLO — JÄÄDYTETTY
+   Kello ei saa kulkea: elokuvassa sen pitää lukea sama lukema
+   joka otossa, tai jatkuvuus rikkoutuu leikkauksessa. Tunnit ja
+   minuutit eivät liiku koskaan itsestään — vain operaattorin
+   näppäimestä. Sekunnit elävät ainoastaan Tickrin ajastimessa.
    ============================================================ */
-let clockBase={h:2,m:58}, clockStart=Date.now();
+let kelloAlku = {h:3, m:31};            // oletus: 3:31 kaikissa cueissa
+let kello     = {h:3, m:31};
+
 function setClock(h,m,pulse){
-  clockBase={h:h,m:m}; clockStart=Date.now(); drawClock();
+  if(h!=null) kello = {h:h, m:m};
+  drawClock();
   if(pulse){ const c=document.getElementById('clock');
     c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse'); }
 }
-function kelloTeksti(){
-  const mins = Math.floor((Date.now()-clockStart)/60000);
-  let m = clockBase.m + mins, h = clockBase.h + Math.floor(m/60);
-  m = m % 60; h = ((h - 1) % 12) + 1;
-  return h + ':' + String(m).padStart(2,'0');
-}
+function kelloTeksti(){ return kello.h + ':' + String(kello.m).padStart(2,'0'); }
 function drawClock(){ document.getElementById('clock').textContent = kelloTeksti(); }
-setInterval(drawClock, 1000);
-function aikaleima(){                   // 03:07 — viestien kellonaika
-  const t = kelloTeksti().split(':');
-  return String(t[0]).padStart(2,'0')+':'+t[1];
+function aikaleima(){                   // 03:31 — viestien kellonaika
+  return String(kello.h).padStart(2,'0')+':'+String(kello.m).padStart(2,'0');
+}
+/* K vaihtaa lähtökellon. 2:58 palauttaa käsikirjoituksen beatin,
+   jossa kello vaihtuu 3:31:een cuessa 5. */
+function vaihdaKello(){
+  kelloAlku = (kelloAlku.m === 31) ? {h:2, m:58} : {h:3, m:31};
+  setClock(kelloAlku.h, kelloAlku.m);
+  document.getElementById('hudKello').textContent =
+    kelloAlku.m === 31 ? '3:31 kiinteä' : '2:58 → 3:31';
 }
 
-/* Tickr — juokseva ajastin */
-let tsec = 11*3600+47*60+33, tickrRun = true;
-setInterval(()=>{
-  if(!tickrRun) return;
-  tsec++;
-  const h=Math.floor(tsec/3600), m=Math.floor(tsec%3600/60), s=tsec%60;
+/* Tickr — tunnit ja minuutit jäädytetty, vain sekunnit elävät.
+   Sekunnit kiertävät 00–59 nostamatta minuuttia. */
+const TICKR_H = 11, TICKR_M = 47;
+let tsek = 33, tickrRun = true;
+function piirraTickr(){
   document.getElementById('tickrTime').textContent =
-    String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-}, 1000);
+    String(TICKR_H).padStart(2,'0')+':'+String(TICKR_M).padStart(2,'0')+':'+
+    String(tsek).padStart(2,'0');
+}
+setInterval(()=>{ if(!tickrRun) return; tsek = (tsek+1)%60; piirraTickr(); }, 1000);
+function nollaaTickr(){
+  tsek = 33; tickrRun = true; piirraTickr();
+  const b = document.getElementById('tickrBtn');
+  b.textContent = '■  PYSÄYTÄ'; b.classList.remove('stopped');
+  document.getElementById('tickrState').textContent =
+    'RUNNING — GRIME-4 / waste_room_01 / ENV ART';
+}
 document.getElementById('tickrBtn').onclick = function(){
   tickrRun = !tickrRun;
   this.textContent = tickrRun ? '■  PYSÄYTÄ' : '▶  JATKA';
@@ -1633,7 +1650,8 @@ function goto(n){
 
   /* Jokainen cue on itsenäinen tila: saman numeron painaminen
      uudestaan tuottaa saman kuvan eikä kasaa ilmoituksia. */
-  if(n===0){ stopFlurry(); clearNotes(); hideAll(); fillTickets(3); setClock(2,58);
+  if(n===0){ stopFlurry(); clearNotes(); hideAll(); fillTickets(3);
+             setClock(kelloAlku.h, kelloAlku.m); nollaaTickr();
              setPlay(false); naytaDock('console'); }
 
   if(n===1){ clearNotes(); startFlurry(); }
@@ -1646,7 +1664,8 @@ function goto(n){
   if(n===4){ stopFlurry(); clearNotes(); show('engine');
     note('13 NEW URGENT REQUESTS', null, true); }
 
-  /* Kello vaihtuu ilmoitus 2:n ollessa vielä ruudulla — ei tyhjennystä. */
+  /* Kello korostuu ilmoitus 2:n ollessa vielä ruudulla — ei tyhjennystä.
+     Jos lähtökello on 2:58, tässä tapahtuu myös vaihtuminen 3:31:een. */
   if(n===5){ setClock(3,31,true); }
 
   if(n===6){ stopFlurry(); clearNotes(); show('backloggr'); fillTickets(31);
@@ -1677,6 +1696,7 @@ addEventListener('keydown', e=>{
     document.getElementById('hudCur').textContent = off ? 'POIS' : 'NÄKYY'; }
   else if(k==='v'){ autoVastaus = !autoVastaus;
     document.getElementById('hudReply').textContent = autoVastaus ? 'ON' : 'POIS'; }
+  else if(k==='k'){ vaihdaKello(); }
   else if(k==='b'){ document.getElementById('black').classList.toggle('on'); }
   else if(k==='r'){ goto(0); }
   else if(k==='h'){ document.getElementById('hud').classList.toggle('off'); }
@@ -1694,6 +1714,7 @@ function updSpeed(){ document.getElementById('hudSpeed').textContent = flurrySpe
 piirraKanavat(); piirraViestit(); paivitaBadget();
 piirraHierarkia(); piirraInspector(); valitse('wall_stain_a');
 piirraStats(); naytaDock('console'); piirraPatina();
+piirraTickr(); drawClock();
 setBri(1.0);
 goto(0);
 </script>

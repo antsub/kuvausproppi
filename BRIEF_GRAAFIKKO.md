@@ -183,7 +183,7 @@ tuotetta.
 | 2 | Klatter | Ilmoitus: "3 NEW URGENT REQUESTS" |
 | 3 | Vessel Engine + jätehuone | Mike työstää kohtausta |
 | 4 | sama | Mike herää mikrounesta → "13 NEW URGENT REQUESTS" |
-| 5 | sama | Kello kääntyy **3:31** |
+| 5 | sama | Kello korostuu — **3:31** |
 | 6 | Backloggr | "31 URGENT REQUESTS", lista kasvaa 3 → 31 |
 
 ## Liite B: Mitä näyttelijä voi tehdä ruudulla
@@ -216,10 +216,15 @@ Ohjauspalkki on ruudun yläreunassa. **Piilota se `H`:lla ennen ottoa.**
 VÄLILYÖNTI  seuraava cue        A  viritä hiirilaukaisu (cue 4)
 0–6         hyppää cueen        B  musta ruutu (ottojen väli)
 ←/→         vilinän nopeus      C  kursori piiloon / näkyviin
-[  ]        ruudun kirkkaus     V  chatin autovastaus pois
-R           alkuun              M  ilmoitusääni pois
-H           piilota palkki      F  koko ruutu
+[  ]        ruudun kirkkaus     K  kello: 3:31 kiinteä / 2:58 → 3:31
+R           alkuun              V  chatin autovastaus pois
+H           piilota palkki      M  ilmoitusääni pois
+                                F  koko ruutu
 ```
+
+**Kello on jäädytetty lukemaan 3:31** eikä kulje itsestään — se on jatkuvuuden
+takia pakollista. Tickrin ajastimessa vain sekunnit elävät, tunnit ja minuutit
+ovat kiinni.
 
 **Kun näyttelijä kirjoittaa chattiin, operaattorin näppäimet ovat pois käytöstä**
 — muuten "b" mustaisi ruudun kesken repliikin. Ohjauspalkkiin syttyy tällöin
