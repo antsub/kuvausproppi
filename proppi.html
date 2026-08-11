@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kuvausproppi — Miken työpöytä</title>
+<style>
+/* ============================================================
+   KUVAUSPROPPI — Miken työpöytä
+   Peligraafikon työasema. Suunniteltu 1920×1080, skaalautuu
+   mihin tahansa ruutuun. Klikattava: näyttelijä voi vastata
+   viesteihin ja käyttää ohjelmia oikeasti.
+   Operaattorin ohjaus näppäimistöltä, ks. ohjauspalkki (H).
+   ============================================================ */
+
+:root{
+  --bg:        #0E1116;
+  --panel:     #151A21;
+  --panel2:    #1A2029;
+  --panel3:    #202834;
+  --line:      #232B36;
+  --line2:     #2E3846;
+  --text:      #C8D0D8;   /* ei puhdasta valkoista — palaisi puhki */
+  --dim:       #6C7885;
+  --dim2:      #4E5866;
+  --klatter:   #7C5CD6;
+  --posthaus:  #3A6BD8;
+  --vessel:    #8A9099;
+  --chisel:    #6E9E4F;
+  --patina:    #3E9E92;
+  --depot:     #8C6FA8;
+  --tickr:     #D8862A;
+  --backloggr: #2FA8C7;
+  --urgent:    #C4402F;
+  --warn:      #C79A3A;
+  --ok:        #5E9E6B;
+  --sel:       #2A4058;
+  --mono:      "IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ height:100%; background:#000; overflow:hidden; }
+body{
+  font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; color:var(--text);
+  -webkit-user-select:none; user-select:none;   /* klikkailu ei maalaa tekstiä siniseksi */
+}
+body.nocursor, body.nocursor *{ cursor:none; }
+input{ -webkit-user-select:text; user-select:text; }
+
+/* Lava on aina 1920×1080 ja skaalataan ruudulle JS:stä.
+   Sijoitus lasketaan pikselilleen — grid-keskitys ei toimi, kun
+   elementti on konttiaan suurempi (leikkautuu reunasta). */
+#wrap{ position:fixed; inset:0; overflow:hidden; background:#000; }
+#stage{
+  position:absolute; left:0; top:0; width:1920px; height:1080px;
+  transform-origin:0 0; background:var(--bg); overflow:hidden;
+  filter:brightness(var(--bri,1));
+}
+
+.mono{ font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.num{ font-family:var(--mono); font-variant-numeric:tabular-nums; }
+
+/* --- työpöytä ----------------------------------------------- */
+#desktop{ position:absolute; inset:0;
+  background:
+    radial-gradient(1200px 700px at 62% 38%, #1B222C 0%, #0E1116 70%),
+    var(--bg);
+}
+#desktop img.wall{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+#deskicons{ position:absolute; left:34px; top:30px; width:120px;
+  display:flex; flex-direction:column; gap:26px; }
+.dicon{ text-align:center; font-size:12px; color:#9AA6B2; line-height:1.35; }
+.dicon .sq{ width:52px; height:52px; margin:0 auto 7px; border-radius:9px;
+  background:var(--panel3); border:1px solid var(--line2); }
+
+/* --- sovellusikkunat ---------------------------------------- */
+/* bottom:52px — ikkuna ei mene tehtäväpalkin alle, kuten ei oikeastikaan */
+.app{ position:absolute; left:0; right:0; top:0; bottom:52px;
+      display:none; z-index:10; background:var(--bg); }
+.app.on{ display:block; }
+.win{ position:absolute; inset:0; display:flex; flex-direction:column; }
+
+.titlebar{
+  height:34px; flex:0 0 34px; background:#10141A; border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:11px; padding:0 14px;
+  font-size:12.5px; letter-spacing:.03em; color:var(--dim);
+}
+.titlebar .nm{ color:var(--text); font-weight:600; letter-spacing:.06em; }
+.titlebar .dot{ width:9px; height:9px; border-radius:2px; background:var(--line2); }
+.titlebar .right{ margin-left:auto; display:flex; align-items:center; gap:16px; }
+
+.menubar{
+  height:28px; flex:0 0 28px; background:var(--panel); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; font-size:12.5px; color:var(--dim);
+}
+.menubar b{ padding:0 12px; font-weight:400; }
+.menubar b:hover{ color:var(--text); background:var(--panel3); }
+.menubar .right{ margin-left:auto; display:flex; align-items:center; gap:14px; padding-right:14px; }
+
+.toolbar{
+  height:38px; flex:0 0 38px; background:var(--panel2); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:6px; padding:0 12px; font-size:12px; color:var(--dim);
+}
+.tool{ width:30px; height:26px; border-radius:4px; display:grid; place-items:center;
+  border:1px solid transparent; font-size:14px; color:var(--dim); }
+.tool:hover{ background:var(--panel3); color:var(--text); }
+.tool.on{ background:var(--sel); border-color:#3A5878; color:#DCE6F0; }
+.tsep{ width:1px; height:20px; background:var(--line2); margin:0 8px; }
+.tbtn{ height:26px; padding:0 11px; border-radius:4px; border:1px solid var(--line2);
+  display:flex; align-items:center; gap:7px; font-size:12px; color:var(--dim); }
+.tbtn:hover{ color:var(--text); border-color:#3D4757; }
+.tbtn.on{ background:var(--sel); border-color:#3A5878; color:#DCE6F0; }
+
+.tabstrip{
+  height:30px; flex:0 0 30px; background:var(--panel); border-bottom:1px solid var(--line);
+  display:flex; align-items:stretch; font-size:12.5px; color:var(--dim);
+}
+.tabstrip span{ display:flex; align-items:center; gap:8px; padding:0 16px;
+  border-right:1px solid var(--line); }
+.tabstrip span:hover{ color:var(--text); }
+.tabstrip span.on{ color:var(--text); background:var(--panel3); box-shadow:inset 0 -2px 0 var(--acc,#5C8CC4); }
+
+.body{ flex:1; display:flex; min-height:0; }
+.panel{ background:var(--panel); border-right:1px solid var(--line); display:flex;
+  flex-direction:column; min-height:0; }
+.ph{ height:26px; flex:0 0 26px; background:var(--panel2); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:8px; padding:0 12px;
+  font-size:10.5px; letter-spacing:.15em; color:var(--dim2); font-weight:600; }
+.ph .r{ margin-left:auto; letter-spacing:0; font-weight:400; }
+.pc{ flex:1; overflow:hidden; padding:6px 0; }
+
+.row{ display:flex; align-items:center; gap:9px; padding:6px 14px;
+  font-size:13px; color:var(--dim); }
+.row:hover{ background:var(--panel2); color:var(--text); }
+.row.on{ color:#DCE6F0; background:var(--sel); }
+.row .ic{ width:14px; text-align:center; color:var(--dim2); font-size:11px; }
+.badge{ margin-left:auto; background:var(--urgent); color:#fff; font-size:10.5px;
+  padding:1px 7px; border-radius:9px; font-variant-numeric:tabular-nums; }
+.badge.q{ background:var(--line2); color:var(--dim); }
+
+.prop{ display:flex; align-items:center; gap:10px; padding:5px 14px; font-size:12.5px; color:var(--dim); }
+.prop b{ font-weight:400; min-width:96px; }
+.prop .v{ margin-left:auto; font-family:var(--mono); color:var(--text); font-size:12px; }
+.xyz{ display:flex; gap:6px; margin-left:auto; }
+.xyz i{ font-style:normal; font-family:var(--mono); font-size:12px; color:var(--text);
+  background:#0C0F14; border:1px solid var(--line); border-radius:3px; padding:2px 8px; min-width:64px;
+  text-align:right; }
+.xyz i::before{ content:attr(data-ax); color:var(--dim2); float:left; }
+
+/* ============================================================
+   VESSEL ENGINE — pelimoottori
+   ============================================================ */
+#engine .body{ position:relative; }
+#eng-hier{ width:290px; flex:0 0 290px; }
+#eng-center{ flex:1; display:flex; flex-direction:column; min-width:0; }
+#eng-insp{ width:350px; flex:0 0 350px; border-left:1px solid var(--line); border-right:0; }
+
+.viewport{
+  position:relative; height:720px; flex:0 0 720px; overflow:hidden;
+  background:
+    radial-gradient(70% 55% at 50% 42%, #2A2723 0%, #14120F 60%, #080706 100%);
+}
+.viewport img.render{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.viewport .grid{ position:absolute; inset:0; opacity:.10;
+  background:
+    repeating-linear-gradient(0deg,  rgba(140,170,200,.5) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(90deg, rgba(140,170,200,.5) 0 1px, transparent 1px 64px); }
+.viewport .flick{ position:absolute; inset:0;
+  background:radial-gradient(38% 26% at 46% 18%, rgba(200,180,120,.20), transparent 70%);
+  animation:flick 5.1s infinite steps(1); }
+@keyframes flick{ 0%,84%,100%{opacity:.85} 86%{opacity:.25} 88%{opacity:.9} 91%{opacity:.15} 93%{opacity:.8} }
+.viewport .grime{ position:absolute; inset:0; opacity:.5;
+  background:
+    repeating-linear-gradient(93deg, rgba(0,0,0,.5) 0 3px, transparent 3px 12px),
+    repeating-linear-gradient(6deg,  rgba(0,0,0,.35) 0 2px, transparent 2px 17px); }
+.viewport .props{ position:absolute; inset:0; }
+.viewport .props i{ position:absolute; display:block; background:#251F18; border:1px solid #38301F; }
+.viewport .props i.sel{ outline:2px solid #E8A33C; outline-offset:1px; }
+.stats{ position:absolute; left:12px; top:10px; font-family:var(--mono); font-size:11.5px;
+  line-height:1.65; color:#9EB0A4; text-shadow:0 1px 2px #000; }
+.stats b{ color:#D6E4DA; font-weight:400; }
+.axis{ position:absolute; right:16px; top:14px; width:58px; height:58px; opacity:.75; }
+.axis i{ position:absolute; left:29px; top:29px; height:2px; transform-origin:0 50%; display:block; }
+.gizmo{ position:absolute; font-size:15px; color:#C7A24A; opacity:.7; text-shadow:0 1px 2px #000; }
+.viewport.play{ box-shadow:inset 0 0 0 2px #3A6BD8; }
+.viewport.play .grid{ display:none; }
+.playtag{ position:absolute; right:16px; bottom:14px; font-family:var(--mono); font-size:12px;
+  color:#8FB6EA; letter-spacing:.14em; display:none; }
+.viewport.play .playtag{ display:block; }
+
+#eng-dock{ flex:1; min-height:0; display:flex; flex-direction:column;
+  border-top:1px solid var(--line); background:var(--panel); }
+#eng-dockbody{ flex:1; min-height:0; display:flex; overflow:hidden; }
+.assetgrid{ flex:1; padding:12px 14px; display:flex; flex-wrap:wrap; gap:12px; align-content:flex-start;
+  overflow:hidden; }
+.ass{ width:86px; font-size:10.5px; color:var(--dim); text-align:center; line-height:1.3; }
+.ass .th{ width:86px; height:66px; border-radius:4px; border:1px solid var(--line2);
+  background:linear-gradient(150deg,#2A2622,#15130F); margin-bottom:5px; position:relative; overflow:hidden; }
+.ass.on .th{ outline:2px solid #3A6BD8; }
+.ass .th img{ width:100%; height:100%; object-fit:cover; }
+.ass .th b{ position:absolute; right:3px; bottom:2px; font-size:8.5px; letter-spacing:.08em;
+  color:#7E8894; font-weight:600; }
+.logs{ flex:1; padding:8px 0; overflow:hidden; font-size:12px; line-height:1.75; }
+.logs div{ padding:1px 16px; display:flex; gap:10px; font-family:var(--mono); color:var(--dim); }
+.logs div:hover{ background:var(--panel2); }
+.logs .warn{ color:var(--warn); }
+.logs .err{ color:var(--urgent); }
+.logs .t{ color:var(--dim2); }
+
+/* ============================================================
+   CHISEL — 3D-mallinnus
+   ============================================================ */
+#chisel .viewport{
+  background:radial-gradient(80% 70% at 50% 45%, #2C3138 0%, #191D22 60%, #0E1114 100%); }
+.wire{ position:absolute; inset:0; }
+.wire svg{ width:100%; height:100%; }
+#chisel .shade-solid .wire{ opacity:.22 }
+#chisel .shade-wire .solidfill{ opacity:.06 }
+.solidfill{ position:absolute; inset:0; }
+#chisel .npanel{ position:absolute; right:12px; top:12px; width:214px; background:rgba(18,22,27,.94);
+  border:1px solid var(--line2); border-radius:5px; padding:9px 0; }
+
+/* ============================================================
+   PATINA — materiaalimaalaus
+   ============================================================ */
+.layer{ display:flex; align-items:center; gap:9px; padding:7px 12px; font-size:12.5px; color:var(--dim); }
+.layer:hover{ background:var(--panel2); }
+.layer.on{ background:var(--sel); color:#DCE6F0; }
+.layer .eye{ width:15px; text-align:center; font-size:11px; color:var(--dim2); }
+.layer.hid{ opacity:.42; }
+.layer .sw{ width:22px; height:22px; border-radius:3px; border:1px solid var(--line2); flex:0 0 22px; }
+.layer .bl{ margin-left:auto; font-family:var(--mono); font-size:10.5px; color:var(--dim2); }
+.chan{ display:flex; align-items:center; gap:10px; padding:7px 12px; font-size:12px; color:var(--dim); }
+.chan .sw{ width:38px; height:28px; border-radius:3px; border:1px solid var(--line2); }
+.chan.on{ color:var(--text); background:var(--panel2); }
+.shelf{ height:118px; flex:0 0 118px; border-top:1px solid var(--line); background:var(--panel);
+  display:flex; gap:11px; padding:11px 14px; overflow:hidden; }
+.smat{ width:96px; font-size:10.5px; color:var(--dim); text-align:center; }
+.smat .th{ width:96px; height:70px; border-radius:4px; border:1px solid var(--line2); margin-bottom:5px; }
+.smat:hover .th{ border-color:#4A5768; }
+#pat-view{ flex:1; position:relative; display:flex; min-width:0; }
+#pat-3d{ flex:1; position:relative; overflow:hidden;
+  background:radial-gradient(70% 60% at 50% 45%, #33302B 0%, #1A1815 60%, #0C0B09 100%); }
+#pat-2d{ width:430px; flex:0 0 430px; border-left:1px solid var(--line); position:relative;
+  background:#121417; overflow:hidden; }
+.uvmap{ position:absolute; inset:26px; border:1px solid #2E3846; }
+.uvmap i{ position:absolute; display:block; border:1px solid #55708C; background:rgba(70,100,130,.13); }
+.patlayer{ position:absolute; inset:0; }
+
+/* ============================================================
+   DEPOT — versionhallinta
+   ============================================================ */
+.file{ display:flex; align-items:center; gap:12px; padding:7px 16px; font-size:12.5px; color:var(--dim);
+  font-family:var(--mono); }
+.file:hover{ background:var(--panel2); }
+.file.on{ background:var(--sel); color:#DCE6F0; }
+.file .st{ width:15px; text-align:center; }
+.file .nm{ flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.file .who{ width:150px; color:var(--dim2); font-size:11.5px; }
+.file .rev{ width:64px; text-align:right; color:var(--dim2); font-size:11.5px; }
+.file.lock .st{ color:var(--urgent); }
+.file.out .st{ color:var(--warn); }
+.file.edit .st{ color:var(--ok); }
+
+/* ============================================================
+   KLATTER — chat
+   ============================================================ */
+#kl-main{ flex:1; display:flex; flex-direction:column; min-width:0; }
+#kl-head{ height:52px; flex:0 0 52px; border-bottom:1px solid var(--line); display:flex;
+  align-items:center; gap:14px; padding:0 26px; }
+#kl-head b{ font-size:16px; color:var(--text); }
+#kl-head span{ font-size:12.5px; color:var(--dim); }
+#kl-feed{ flex:1; overflow:hidden; padding:18px 26px 6px; display:flex; flex-direction:column;
+  justify-content:flex-end; }
+.msg{ margin-bottom:15px; display:flex; gap:12px; }
+.msg .av{ width:34px; height:34px; flex:0 0 34px; border-radius:5px; background:var(--panel3);
+  display:grid; place-items:center; font-size:13px; font-weight:600; color:#0B0E12; }
+.msg .bd{ min-width:0; }
+.msg .who{ font-size:13.5px; font-weight:600; color:var(--text); }
+.msg .who i{ font-style:normal; color:var(--dim2); font-weight:400; font-size:11.5px; margin-left:9px;
+  font-family:var(--mono); }
+.msg .txt{ font-size:13.5px; color:#A8B2BD; margin-top:2px; line-height:1.55; }
+.msg.bot .txt{ font-family:var(--mono); font-size:12.5px; }
+.msg.me .who{ color:#8FB6EA; }
+.msg.err .txt{ color:var(--urgent); font-family:var(--mono); font-size:12.5px; }
+#kl-typing{ height:20px; padding:0 26px; font-size:11.5px; color:var(--dim2); font-style:italic; }
+#kl-compose{ padding:8px 26px 22px; }
+#kl-box{ border:1px solid var(--line2); border-radius:7px; background:#10141A; padding:11px 14px 8px; }
+#kl-box:focus-within{ border-color:#4A6A98; }
+#kl-input{ width:100%; background:none; border:0; outline:0; color:var(--text);
+  font-family:inherit; font-size:13.5px; }
+#kl-input::placeholder{ color:var(--dim2); }
+#kl-tools{ display:flex; gap:14px; margin-top:9px; font-size:13px; color:var(--dim2); }
+#kl-tools .send{ margin-left:auto; background:var(--ok); color:#0B0E12; border-radius:4px;
+  padding:2px 12px; font-size:12px; font-weight:600; }
+
+/* --- sähköposti ja tiketit ---------------------------------- */
+.mail{ border-bottom:1px solid var(--line); padding:12px 18px; display:flex; gap:18px; font-size:13.5px; }
+.mail:hover{ background:var(--panel2); }
+.mail.on{ background:var(--sel); }
+.mail .from{ width:180px; color:var(--text); }
+.mail .subj{ flex:1; color:var(--dim); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.mail .t{ color:var(--dim2); font-size:11.5px; font-family:var(--mono); }
+.mail.un .subj{ color:var(--text); }
+.mail.un .from{ font-weight:600; }
+
+.ticket{ border-bottom:1px solid var(--line); padding:10px 18px; display:flex; gap:16px;
+  align-items:center; font-size:13px; }
+.ticket:hover{ background:var(--panel2); }
+.ticket.on{ background:var(--sel); }
+.ticket .key{ width:104px; color:var(--backloggr); font-family:var(--mono); font-size:12px; }
+.ticket .sum{ flex:1; color:var(--dim); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.ticket .who{ width:26px; height:26px; border-radius:50%; background:var(--panel3);
+  display:grid; place-items:center; font-size:10.5px; color:var(--dim); }
+.tag{ font-size:10px; letter-spacing:.1em; padding:2px 8px; border:1px solid var(--urgent);
+  color:var(--urgent); border-radius:3px; }
+#bl-detail{ width:0; flex:0 0 0; overflow:hidden; border-left:1px solid var(--line);
+  background:var(--panel); transition:flex-basis .12s; }
+#bl-detail.on{ width:520px; flex:0 0 520px; }
+
+.bigtimer{ font-size:108px; letter-spacing:.02em; color:var(--tickr); margin:50px 0 8px; }
+.startbtn{ display:inline-flex; align-items:center; gap:9px; margin-top:26px; padding:9px 26px;
+  border-radius:5px; background:var(--urgent); color:#fff; font-size:13px; letter-spacing:.06em; }
+.startbtn.stopped{ background:var(--ok); color:#0B0E12; }
+
+/* --- tehtäväpalkki ------------------------------------------ */
+#taskbar{
+  position:absolute; left:0; right:0; bottom:0; height:52px; z-index:40;
+  background:rgba(11,14,18,.96); border-top:1px solid var(--line);
+  display:flex; align-items:center; padding:0 18px; gap:11px;
+}
+.tbicon{ width:34px; height:34px; border-radius:7px; display:grid; place-items:center;
+  font-size:14px; font-weight:700; color:#0B0E12; opacity:.6; position:relative; }
+.tbicon:hover{ opacity:.85; }
+.tbicon.act{ opacity:1; box-shadow:0 3px 0 -1px currentColor; }
+.tbicon span{ position:relative; z-index:1; }
+.tbicon img{ position:absolute; inset:0; width:100%; height:100%; border-radius:7px; }
+.tbicon em{ position:absolute; right:-3px; top:-3px; z-index:2; background:var(--urgent);
+  color:#fff; font-style:normal; font-size:9.5px; font-family:var(--mono); border-radius:8px;
+  padding:0 4px; min-width:15px; text-align:center; }
+#tray{ margin-left:auto; display:flex; align-items:center; gap:16px; font-size:12px; color:var(--dim); }
+#clock{ font-family:var(--mono); font-size:21px; letter-spacing:.05em; color:var(--text);
+  font-variant-numeric:tabular-nums; }
+#clock.pulse{ animation:cpulse .9s ease-out 1; }
+@keyframes cpulse{ 0%{ color:#fff; text-shadow:0 0 18px rgba(255,255,255,.55) } 100%{ color:var(--text) } }
+
+/* --- ilmoitukset -------------------------------------------- */
+#notes{ position:absolute; right:26px; top:26px; width:520px; z-index:60;
+  display:flex; flex-direction:column; gap:14px; pointer-events:none; }
+.note{
+  background:#1B222C; border:1px solid #2C3542; border-left:4px solid var(--urgent);
+  border-radius:6px; padding:16px 18px; box-shadow:0 12px 40px rgba(0,0,0,.6);
+  animation:noteIn .28s cubic-bezier(.2,1.4,.4,1); pointer-events:auto;
+}
+@keyframes noteIn{ from{ transform:translateX(70px); opacity:0 } to{ transform:none; opacity:1 } }
+.note .hd{ display:flex; align-items:center; gap:10px; font-size:12px; letter-spacing:.12em;
+  color:var(--dim); margin-bottom:8px; }
+.note .hd b{ color:var(--urgent); letter-spacing:.12em; }
+.note .hd i{ margin-left:auto; font-style:normal; color:var(--dim2); }
+.note .big{ font-size:23px; font-weight:600; color:var(--text); line-height:1.3; font-family:var(--mono); }
+.note .sub{ font-size:14px; color:var(--dim); margin-top:7px; line-height:1.5; font-family:var(--mono); }
+.note.flash{ animation:noteIn .28s cubic-bezier(.2,1.4,.4,1), fl .5s 3; }
+@keyframes fl{ 50%{ border-color:var(--urgent); background:#2A1D1D } }
+
+/* --- pikkuilmoitus (toast) ---------------------------------- */
+#toast{ position:absolute; left:50%; bottom:96px; transform:translateX(-50%); z-index:70;
+  background:#241A1A; border:1px solid #4A2E2A; border-radius:5px; padding:11px 20px;
+  font-size:13px; color:#E0A79E; display:none; box-shadow:0 10px 30px rgba(0,0,0,.6); }
+#toast.on{ display:block; animation:noteIn .2s ease-out; }
+
+/* --- musta ruutu / operaattorin HUD ------------------------- */
+/* Molemmat lavan ULKOPUOLELLA ruutukoordinaateissa. */
+#black{ position:fixed; inset:0; background:#000; z-index:150; display:none; }
+#black.on{ display:block; }
+#hud{
+  position:fixed; left:0; right:0; top:0; z-index:200; pointer-events:none;
+  background:rgba(0,0,0,.92); border-bottom:1px solid #2A2F36; padding:5px 12px;
+  font-family:var(--mono); font-size:11.5px; line-height:1.5; color:#77828E;
+  display:flex; gap:11px; flex-wrap:wrap; align-items:center; white-space:nowrap;
+}
+#hud.off{ display:none; }
+#hud b{ color:#fff; font-weight:600; }
+#hud .st{ color:#E8B14C; margin-right:6px; }
+#hud .st b{ color:#E8B14C; }
+#hud .sep{ color:#39404A; }
+#hud .kirj{ color:#E8B14C; display:none; }
+#hud.typing .kirj{ display:inline; }
+#hud.typing .keys{ opacity:.3; }
+</style>
+</head>
+<body>
+
+<div id="wrap"><div id="stage">
+
+  <!-- ==================== TYÖPÖYTÄ ==================== -->
+  <div id="desktop">
+    <img class="wall" src="assets/desktop.png" alt="" onerror="this.remove()">
+    <div id="deskicons">
+      <div class="dicon"><div class="sq"></div>grimeproject</div>
+      <div class="dicon"><div class="sq"></div>_refs_wasteroom</div>
+      <div class="dicon"><div class="sq"></div>build_4471.log</div>
+    </div>
+  </div>
+
+  <!-- ==================== VESSEL ENGINE ==================== -->
+  <div class="app" id="engine">
+    <div class="win">
+      <div class="titlebar">
+        <span class="dot" style="background:var(--vessel)"></span>
+        <span class="nm">VESSEL ENGINE 9.4</span>
+        <span>grimeproject — waste_room_01.scene *</span>
+        <span class="right">
+          <span class="mono" style="color:var(--warn)">◆ DEPOT mike@grime-4 · 331 pending</span>
+        </span>
+      </div>
+      <div class="menubar">
+        <b>File</b><b>Edit</b><b>Assets</b><b>GameObject</b><b>Component</b><b>Tools</b><b>Window</b><b>Help</b>
+        <span class="right">
+          <span class="mono" style="color:var(--dim2)">Layout: Env Art</span>
+        </span>
+      </div>
+      <div class="toolbar">
+        <div class="tool" data-tool="hand">✥</div>
+        <div class="tool on" data-tool="move">✛</div>
+        <div class="tool" data-tool="rot">⟳</div>
+        <div class="tool" data-tool="scale">⤢</div>
+        <div class="tool" data-tool="rect">▣</div>
+        <div class="tsep"></div>
+        <div class="tbtn" id="eng-pivot">Pivot</div>
+        <div class="tbtn" id="eng-local">Local</div>
+        <div class="tsep"></div>
+        <div class="tool" id="eng-play" style="font-size:12px">▶</div>
+        <div class="tool" id="eng-pause" style="font-size:12px">❚❚</div>
+        <div class="tool" style="font-size:12px">▶❚</div>
+        <div class="tsep"></div>
+        <span class="mono" style="color:var(--dim2)">Lighting: Baked</span>
+        <span class="mono" style="margin-left:auto;color:var(--dim2)">Collab ▾&nbsp;&nbsp;Layers ▾&nbsp;&nbsp;Account ▾</span>
+      </div>
+
+      <div class="body">
+        <!-- hierarkia -->
+        <div class="panel" id="eng-hier">
+          <div class="ph">HIERARCHY <span class="r mono">34</span></div>
+          <div class="pc" id="hierList"></div>
+        </div>
+
+        <!-- keskisarake: näkymä + alalaita -->
+        <div id="eng-center">
+          <div class="tabstrip" style="--acc:#5C8CC4">
+            <span class="on" data-vtab="scene">Scene</span>
+            <span data-vtab="game">Game</span>
+            <span data-vtab="anim">Animator</span>
+            <span style="margin-left:auto;border:0;color:var(--dim2)" class="mono">Shaded ▾&nbsp;&nbsp;2D&nbsp;&nbsp;💡&nbsp;&nbsp;🔊</span>
+          </div>
+
+          <div class="viewport" id="viewport">
+            <img class="render" src="assets/engine_viewport_wasteroom.png" alt="" onerror="this.remove()">
+            <div class="grid"></div>
+            <div class="props" id="vprops">
+              <i data-id="bin_rusted_01" style="left:9%;  top:52%; width:150px; height:250px"></i>
+              <i data-id="bin_rusted_02" style="left:22%; top:63%; width:120px; height:175px"></i>
+              <i data-id="bag_pile_03"   style="right:14%;top:57%; width:180px; height:215px"></i>
+              <i data-id="wall_stain_a"  style="right:33%;top:71%; width:230px; height:105px"></i>
+              <i data-id="wall_stain_b"  style="left:44%; top:76%; width:260px; height:82px"></i>
+            </div>
+            <div class="grime"></div>
+            <div class="flick"></div>
+            <div class="gizmo" style="left:46%;top:11%">💡</div>
+            <div class="gizmo" style="left:73%;top:16%">💡</div>
+            <div class="stats" id="engStats"></div>
+            <div class="axis">
+              <i style="width:26px;background:#C4402F;transform:rotate(24deg)"></i>
+              <i style="width:26px;background:#5E9E6B;transform:rotate(-62deg)"></i>
+              <i style="width:22px;background:#3A6BD8;transform:rotate(158deg)"></i>
+            </div>
+            <div class="playtag">▶ PLAYING</div>
+          </div>
+
+          <div id="eng-dock">
+            <div class="tabstrip" style="--acc:#C79A3A">
+              <span data-dtab="project">Project</span>
+              <span class="on" data-dtab="console">Console
+                <b class="mono" style="color:var(--warn);font-weight:400">⚠ 331</b>
+                <b class="mono" style="color:var(--urgent);font-weight:400">✖ 1</b></span>
+              <span data-dtab="profiler">Profiler</span>
+              <span data-dtab="depot">Version Control <b class="mono" style="color:var(--warn);font-weight:400">331</b></span>
+            </div>
+            <div id="eng-dockbody">
+              <div class="panel" id="eng-folders" style="width:250px;flex:0 0 250px;display:none">
+                <div class="pc" id="folderList"></div>
+              </div>
+              <div class="assetgrid" id="assetGrid" style="display:none"></div>
+              <div class="logs" id="engineConsole"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- inspector -->
+        <div class="panel" id="eng-insp">
+          <div class="ph">INSPECTOR <span class="r mono" id="inspName">wall_stain_a</span></div>
+          <div class="pc" id="inspBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CHISEL — mallinnus ==================== -->
+  <div class="app" id="chisel">
+    <div class="win">
+      <div class="titlebar">
+        <span class="dot" style="background:var(--chisel)"></span>
+        <span class="nm">CHISEL 4.2</span>
+        <span>SM_bin_rusted_02.blend — [Edit Mode]</span>
+        <span class="right"><span class="mono" style="color:var(--dim2)">Verts 12 448 · Faces 11 203 · Tris 22 406 · Objects 1/34</span></span>
+      </div>
+      <div class="menubar">
+        <b>File</b><b>Edit</b><b>Mesh</b><b>Vertex</b><b>Edge</b><b>Face</b><b>UV</b><b>Modifier</b>
+        <span class="right"><span class="mono" style="color:var(--dim2)">Scene: waste_room_01</span></span>
+      </div>
+      <div class="toolbar">
+        <div class="tbtn on" id="ch-mode">Edit Mode ▾</div>
+        <div class="tsep"></div>
+        <div class="tool on" data-cs="vert">·</div>
+        <div class="tool" data-cs="edge">╱</div>
+        <div class="tool" data-cs="face">◧</div>
+        <div class="tsep"></div>
+        <div class="tbtn" data-shade="wire">Wireframe</div>
+        <div class="tbtn on" data-shade="solid">Solid</div>
+        <div class="tbtn" data-shade="mat">Material</div>
+        <span class="mono" style="margin-left:auto;color:var(--dim2)">Snap: Vertex&nbsp;&nbsp;·&nbsp;&nbsp;Proportional: off</span>
+      </div>
+      <div class="body">
+        <div class="panel" style="width:210px;flex:0 0 210px">
+          <div class="ph">TOOLS</div>
+          <div class="pc">
+            <div class="row"><span class="ic">▭</span>Extrude Region</div>
+            <div class="row"><span class="ic">◇</span>Bevel</div>
+            <div class="row"><span class="ic">✂</span>Loop Cut</div>
+            <div class="row"><span class="ic">⌗</span>Inset Faces</div>
+            <div class="row"><span class="ic">◯</span>Smooth Vertices</div>
+            <div class="row"><span class="ic">⬡</span>Decimate</div>
+            <div class="ph" style="margin-top:10px">MODIFIERS</div>
+            <div class="row"><span class="ic">▤</span>Mirror</div>
+            <div class="row"><span class="ic">▦</span>Subdivision · 2</div>
+            <div class="row"><span class="ic">▧</span>Weighted Normal</div>
+          </div>
+        </div>
+        <div id="chisel-view" class="shade-solid" style="flex:1;position:relative;min-width:0;display:flex;flex-direction:column">
+          <div class="viewport" style="flex:1;height:auto">
+            <div class="solidfill">
+              <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">
+                <polygon points="380,150 620,150 660,470 340,470" fill="#3A3F46"/>
+                <polygon points="380,150 620,150 600,120 400,120" fill="#4A5058"/>
+                <polygon points="620,150 660,470 690,440 650,130" fill="#2C3138"/>
+              </svg>
+            </div>
+            <div class="wire">
+              <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet">
+                <g stroke="#8FA6BE" fill="none" stroke-width="1">
+                  <polygon points="380,150 620,150 660,470 340,470"/>
+                  <polygon points="400,120 600,120 650,130 650,440"/>
+                  <path d="M380,150 L400,120 M620,150 L600,120 M660,470 L690,440 M650,130 L690,440"/>
+                  <path d="M380,214 H620 M380,278 H628 M380,342 H636 M380,406 H644"/>
+                  <path d="M420,150 V470 M460,150 V470 M500,150 V470 M540,150 V470 M580,150 V470"/>
+                </g>
+                <g fill="#E8A33C">
+                  <circle cx="380" cy="150" r="3.5"/><circle cx="620" cy="150" r="3.5"/>
+                  <circle cx="660" cy="470" r="3.5"/><circle cx="340" cy="470" r="3.5"/>
+                  <circle cx="500" cy="150" r="3.5"/><circle cx="500" cy="470" r="3.5"/>
+                </g>
+              </svg>
+            </div>
+            <div class="stats">Objects 1/34 · Verts <b>12 448</b> · Faces <b>11 203</b> · Tris <b>22 406</b><br>Mem 1.42 GB · v4.2.1</div>
+            <div class="npanel">
+              <div class="ph" style="background:none;border:0">TRANSFORM</div>
+              <div class="prop"><b>Location</b></div>
+              <div class="prop"><b>X</b><span class="v">-3.310 m</span></div>
+              <div class="prop"><b>Y</b><span class="v">0.000 m</span></div>
+              <div class="prop"><b>Z</b><span class="v">1.204 m</span></div>
+              <div class="prop"><b>Dimensions</b></div>
+              <div class="prop"><b>X</b><span class="v">0.62 m</span></div>
+              <div class="prop"><b>Y</b><span class="v">0.62 m</span></div>
+              <div class="prop"><b>Z</b><span class="v">1.05 m</span></div>
+            </div>
+          </div>
+          <div style="height:34px;flex:0 0 34px;border-top:1px solid var(--line);background:var(--panel2);
+                      display:flex;align-items:center;padding:0 16px;gap:20px;font-size:11.5px;color:var(--dim2)"
+               class="mono">
+            <span>1</span><span style="flex:1;height:5px;background:#0C0F14;border-radius:3px;position:relative">
+              <b style="position:absolute;left:31%;top:-4px;width:2px;height:13px;background:#E8A33C"></b></span><span>250</span>
+          </div>
+        </div>
+        <div class="panel" style="width:300px;flex:0 0 300px;border-left:1px solid var(--line);border-right:0">
+          <div class="ph">OUTLINER</div>
+          <div class="pc">
+            <div class="row"><span class="ic">▾</span>waste_room_01</div>
+            <div class="row" style="padding-left:32px"><span class="ic">▾</span>props_debris</div>
+            <div class="row on" style="padding-left:52px"><span class="ic">△</span>SM_bin_rusted_02</div>
+            <div class="row" style="padding-left:52px"><span class="ic">△</span>SM_bin_rusted_01</div>
+            <div class="row" style="padding-left:52px"><span class="ic">△</span>SM_bag_pile_03</div>
+            <div class="row" style="padding-left:32px"><span class="ic">▸</span>geo_walls</div>
+            <div class="row" style="padding-left:32px"><span class="ic">▸</span>lighting</div>
+            <div class="ph" style="margin-top:10px">ITEM · SM_bin_rusted_02</div>
+            <div class="prop"><b>Vertices</b><span class="v">12 448</span></div>
+            <div class="prop"><b>Triangles</b><span class="v">22 406</span></div>
+            <div class="prop"><b>UV maps</b><span class="v">UV0, UV1</span></div>
+            <div class="prop"><b>Material</b><span class="v">M_grime_04</span></div>
+            <div class="prop"><b>LOD</b><span class="v">0 / 3</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PATINA — materiaalimaalaus ==================== -->
+  <div class="app" id="patina">
+    <div class="win">
+      <div class="titlebar">
+        <span class="dot" style="background:var(--patina)"></span>
+        <span class="nm">PATINA 8</span>
+        <span>waste_room_01.patina — TS_wall_stain_a — 4096 × 4096</span>
+        <span class="right"><span class="mono" style="color:var(--dim2)">Baked: AO, Curvature, Position, Thickness</span></span>
+      </div>
+      <div class="menubar">
+        <b>File</b><b>Edit</b><b>Mode</b><b>Layer</b><b>Bake</b><b>Export</b><b>Window</b>
+        <span class="right"><span class="mono" style="color:var(--dim2)">GPU 71 % · VRAM 9.4 / 12 GB</span></span>
+      </div>
+      <div class="toolbar">
+        <div class="tool on">✏</div><div class="tool">◐</div><div class="tool">▨</div>
+        <div class="tool">✥</div><div class="tool">◌</div>
+        <div class="tsep"></div>
+        <div class="tbtn on" data-pchan="basecolor">Base Color</div>
+        <div class="tbtn" data-pchan="rough">Roughness</div>
+        <div class="tbtn" data-pchan="normal">Normal</div>
+        <div class="tbtn" data-pchan="height">Height</div>
+        <span class="mono" style="margin-left:auto;color:var(--dim2)">Brush: Grunge Leaks 04 · Size 412 · Flow 0.31</span>
+      </div>
+      <div class="body" style="flex-direction:column">
+        <div style="flex:1;display:flex;min-height:0">
+          <div class="panel" style="width:300px;flex:0 0 300px">
+            <div class="ph">LAYERS <span class="r mono" id="patCount">7</span></div>
+            <div class="pc" id="patLayers"></div>
+          </div>
+          <div id="pat-view">
+            <div id="pat-3d">
+              <img src="assets/patina_wall.png" alt="" onerror="this.remove()"
+                   style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+              <div class="patlayer" id="patRender"></div>
+              <div class="stats">TS_wall_stain_a · 4096² · 7 layers<br>Shader: pbr-metal-rough</div>
+            </div>
+            <div id="pat-2d">
+              <div class="ph" style="position:absolute;left:0;right:0;top:0;z-index:2">UV · UV0</div>
+              <div class="uvmap">
+                <i style="left:4%;top:6%;width:44%;height:38%"></i>
+                <i style="left:52%;top:6%;width:44%;height:38%"></i>
+                <i style="left:4%;top:48%;width:28%;height:44%"></i>
+                <i style="left:36%;top:48%;width:28%;height:44%"></i>
+                <i style="left:68%;top:48%;width:28%;height:20%"></i>
+                <i style="left:68%;top:72%;width:28%;height:20%"></i>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="width:280px;flex:0 0 280px;border-left:1px solid var(--line);border-right:0">
+            <div class="ph">CHANNELS</div>
+            <div class="pc">
+              <div class="chan on"><div class="sw" style="background:#6B5B49"></div>Base Color</div>
+              <div class="chan"><div class="sw" style="background:#8A8A8A"></div>Roughness</div>
+              <div class="chan"><div class="sw" style="background:#141414"></div>Metallic</div>
+              <div class="chan"><div class="sw" style="background:#7E7EFF"></div>Normal</div>
+              <div class="chan"><div class="sw" style="background:#585858"></div>Height</div>
+              <div class="chan"><div class="sw" style="background:#2A2A2A"></div>Ambient Occl.</div>
+              <div class="ph" style="margin-top:10px">EXPORT</div>
+              <div class="prop"><b>Preset</b><span class="v">Vessel ORM</span></div>
+              <div class="prop"><b>Format</b><span class="v">.tga 8-bit</span></div>
+              <div class="prop"><b>Size</b><span class="v">4096²</span></div>
+              <div class="prop"><b>Suffix</b><span class="v">_BC _N _ORM</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="shelf" id="patShelf"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DEPOT — versionhallinta ==================== -->
+  <div class="app" id="depot">
+    <div class="win">
+      <div class="titlebar">
+        <span class="dot" style="background:var(--depot)"></span>
+        <span class="nm">DEPOT</span>
+        <span>mike@grime-4 — //grimeproject/main</span>
+        <span class="right"><span class="mono" style="color:var(--warn)">331 files pending · workspace 41 GB</span></span>
+      </div>
+      <div class="menubar">
+        <b>File</b><b>Edit</b><b>View</b><b>Connection</b><b>Search</b><b>Tools</b>
+        <span class="right"><span class="mono" style="color:var(--dim2)">Server: depot.grimeshift.local:1666</span></span>
+      </div>
+      <div class="toolbar">
+        <div class="tbtn" id="dp-get">Get Latest</div>
+        <div class="tbtn" id="dp-checkout">Check Out</div>
+        <div class="tbtn" id="dp-submit">Submit…</div>
+        <div class="tsep"></div>
+        <div class="tbtn">Revert</div>
+        <div class="tbtn">Diff</div>
+        <span class="mono" style="margin-left:auto;color:var(--dim2)">Changelist 4471 — default</span>
+      </div>
+      <div class="body">
+        <div class="panel" style="width:340px;flex:0 0 340px">
+          <div class="ph">DEPOT TREE</div>
+          <div class="pc">
+            <div class="row"><span class="ic">▾</span>//grimeproject</div>
+            <div class="row" style="padding-left:30px"><span class="ic">▾</span>main</div>
+            <div class="row" style="padding-left:50px"><span class="ic">▾</span>content</div>
+            <div class="row" style="padding-left:70px"><span class="ic">▾</span>environments</div>
+            <div class="row on" style="padding-left:90px"><span class="ic">▪</span>waste_room_01</div>
+            <div class="row" style="padding-left:90px"><span class="ic">▪</span>corridor_02</div>
+            <div class="row" style="padding-left:90px"><span class="ic">▪</span>lobby_03</div>
+            <div class="row" style="padding-left:70px"><span class="ic">▸</span>characters</div>
+            <div class="row" style="padding-left:70px"><span class="ic">▸</span>materials</div>
+            <div class="row" style="padding-left:50px"><span class="ic">▸</span>source</div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+          <div class="ph" style="height:26px;flex:0 0 26px">
+            //grimeproject/main/content/environments/waste_room_01/
+            <span class="r mono">12 files</span>
+          </div>
+          <div style="flex:1;overflow:hidden" id="depotFiles"></div>
+          <div class="panel" style="height:230px;flex:0 0 230px;border-top:1px solid var(--line);border-right:0">
+            <div class="ph">PENDING CHANGELISTS</div>
+            <div class="pc">
+              <div class="row on"><span class="ic">▾</span>4471 — <span style="color:var(--dim)">waste room lighting pass + grime materials</span>
+                <span class="badge q mono">331</span></div>
+              <div class="file edit" style="padding-left:44px"><span class="st">✎</span>
+                <span class="nm">M_grime_04.mat</span><span class="who">mike</span><span class="rev">#41</span></div>
+              <div class="file edit" style="padding-left:44px"><span class="st">✎</span>
+                <span class="nm">T_wall_stain_a_BC.tga</span><span class="who">mike</span><span class="rev">#12</span></div>
+              <div class="file lock" style="padding-left:44px"><span class="st">🔒</span>
+                <span class="nm">waste_room_01.scene</span><span class="who">t.rautio — LOCKED</span><span class="rev">#331</span></div>
+              <div class="row"><span class="ic">▸</span>4470 — <span style="color:var(--dim)">shelved: bin LOD fix</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== KLATTER — chat ==================== -->
+  <div class="app" id="klatter">
+    <div class="win">
+      <div class="titlebar">
+        <span class="dot" style="background:var(--klatter)"></span>
+        <span class="nm">KLATTER</span><span>Grimeshift Studios</span>
+        <span class="right"><span class="mono" style="color:var(--dim2)">mike · aktiivinen 19 h</span></span>
+      </div>
+      <div class="body">
+        <div class="panel" style="width:290px;flex:0 0 290px">
+          <div class="pc" id="klChannels"></div>
+        </div>
+        <div id="kl-main">
+          <div id="kl-head"><b id="klTitle"># build-fails</b><span id="klTopic"></span></div>
+          <div id="kl-feed"></div>
+          <div id="kl-typing"></div>
+          <div id="kl-compose">
+            <div id="kl-box">
+              <input id="kl-input" autocomplete="off" spellcheck="false" placeholder="Viesti kanavalle #build-fails">
+              <div id="kl-tools"><span>＋</span><span>😐</span><span>@</span><span>B</span><span>&lt;/&gt;</span>
+                <span class="send" id="klSend">Lähetä</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== POSTHAUS — sähköposti ==================== -->
+  <div class="app" id="posthaus">
+    <div class="win">
+      <div class="titlebar">
+        <span class="dot" style="background:var(--posthaus)"></span>
+        <span class="nm">POSTHAUS</span><span>mike@grimeshift.studio</span>
+        <span class="right"><span class="mono" style="color:var(--dim2)">Synkronoitu 03:03</span></span>
+      </div>
+      <div class="body">
+        <div class="panel" style="width:270px;flex:0 0 270px">
+          <div class="ph">KANSIOT</div>
+          <div class="pc">
+            <div class="row on"><span class="ic">▤</span>Inbox <span class="badge mono" id="phCount">2 431</span></div>
+            <div class="row"><span class="ic">⚑</span>Flagged <span class="badge q mono">88</span></div>
+            <div class="row"><span class="ic">↗</span>Sent</div>
+            <div class="row"><span class="ic">▣</span>Archive</div>
+            <div class="row"><span class="ic">🗑</span>Trash</div>
+            <div class="ph" style="margin-top:10px">SUODATTIMET</div>
+            <div class="row"><span class="ic">⚙</span>build-system → Archive</div>
+            <div class="row"><span class="ic">⚙</span>ei käytössä <span class="badge q mono">pois</span></div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+          <div style="flex:1;overflow:hidden" id="mailList"></div>
+          <div class="panel" id="mailRead" style="height:0;flex:0 0 0;overflow:hidden;
+               border-top:1px solid var(--line);border-right:0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TICKR — tuntikirjaus ==================== -->
+  <div class="app" id="tickr">
+    <div class="win">
+      <div class="titlebar">
+        <span class="dot" style="background:var(--tickr)"></span>
+        <span class="nm">TICKR</span><span>time tracking — Grimeshift Studios</span>
+        <span class="right"><span class="mono" style="color:var(--urgent)">Ylityöraja ylitetty 11 vrk sitten</span></span>
+      </div>
+      <div class="body">
+        <div style="flex:1;padding:26px 34px;text-align:center;overflow:hidden">
+          <div style="font-size:12px;letter-spacing:.18em;color:var(--dim)" id="tickrState">
+            RUNNING — GRIME-4 / waste_room_01 / ENV ART</div>
+          <div class="bigtimer mono" id="tickrTime">11:47:33</div>
+          <div style="font-size:13.5px;color:var(--dim)">TÄMÄ VIIKKO
+            <span class="mono" style="color:var(--text)">71 h 12 min</span>
+            &nbsp;·&nbsp; YLITYÖ <span class="mono" style="color:var(--urgent)">+31 h 12 min</span></div>
+          <div class="startbtn" id="tickrBtn">■ &nbsp;PYSÄYTÄ</div>
+          <div style="margin-top:34px;max-width:940px;margin-inline:auto;text-align:left">
+            <div class="mail"><div class="from">ma</div><div class="subj">waste_room_01 — blockout</div><div class="t">13 h 04</div></div>
+            <div class="mail"><div class="from">ti</div><div class="subj">waste_room_01 — highpoly / bake</div><div class="t">14 h 51</div></div>
+            <div class="mail"><div class="from">ke</div><div class="subj">bugfix / build 4470</div><div class="t">15 h 22</div></div>
+            <div class="mail"><div class="from">to</div><div class="subj">waste_room_01 — lighting pass</div><div class="t">15 h 48</div></div>
+            <div class="mail"><div class="from">pe</div><div class="subj">waste_room_01 — grime materials</div><div class="t">11 h 47</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BACKLOGGR — tiketit ==================== -->
+  <div class="app" id="backloggr">
+    <div class="win">
+      <div class="titlebar">
+        <span class="dot" style="background:var(--backloggr)"></span>
+        <span class="nm">BACKLOGGR</span><span>GRIME-4 · Sprint 31 — 2 vrk jäljellä</span>
+        <span class="right"><span class="mono" style="color:var(--dim2)">Burndown: jäljessä 41 pistettä</span></span>
+      </div>
+      <div class="tabstrip" style="--acc:#2FA8C7">
+        <span class="on">Assigned to me</span><span>Board</span><span>Backlog</span>
+        <span>Sprint 31</span><span>Reports</span>
+      </div>
+      <div class="body">
+        <div class="panel" style="width:280px;flex:0 0 280px">
+          <div class="ph">SUODATTIMET</div>
+          <div class="pc">
+            <div class="row on"><span class="ic">!</span>Urgent <span class="badge mono" id="sideUrgent">3</span></div>
+            <div class="row"><span class="ic">⊘</span>Blocked <span class="badge q mono">17</span></div>
+            <div class="row"><span class="ic">👁</span>In review <span class="badge q mono">42</span></div>
+            <div class="row"><span class="ic">▤</span>Known issues <span class="badge q mono">331</span></div>
+            <div class="ph" style="margin-top:10px">EPIC</div>
+            <div class="row"><span class="ic">▪</span>Environments — waste room</div>
+            <div class="row"><span class="ic">▪</span>Lighting overhaul</div>
+            <div class="row"><span class="ic">▪</span>Perf: sector 3</div>
+          </div>
+        </div>
+        <div style="flex:1;overflow:hidden" id="ticketList"></div>
+        <div id="bl-detail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TEHTÄVÄPALKKI ==================== -->
+  <div id="taskbar"></div>
+
+  <div id="notes"></div>
+  <div id="toast"></div>
+
+</div></div>
+
+<div id="black"></div>
+
+<div id="hud">
+  <span class="st">CUE <b id="hudCue">0</b> · <b id="hudName">perustila</b></span>
+  <span class="sep">|</span>
+  <span class="kirj"><b>NÄYTTELIJÄ KIRJOITTAA</b> — Esc palauttaa näppäimet</span>
+  <span class="keys">␣ seur.</span>
+  <span class="keys">0–6 hyppy</span>
+  <span class="keys">←→ vilinä <b id="hudSpeed">1.0×</b></span>
+  <span class="keys">[ ] kirkkaus <b id="hudBri">100 %</b></span>
+  <span class="sep keys">|</span>
+  <span class="keys">A hiiri</span>
+  <span class="keys">B musta</span>
+  <span class="keys">C kursori <b id="hudCur">NÄKYY</b></span>
+  <span class="keys">V autovastaus <b id="hudReply">ON</b></span>
+  <span class="keys">M ääni <b id="hudSound">ON</b></span>
+  <span class="keys">R alku</span>
+  <span class="keys">F koko ruutu</span>
+  <span class="sep keys">|</span>
+  <span class="keys"><b>H piilota</b></span>
+</div>
+
+<script>
+/* ============================================================
+   SKAALAUS — lasketaan sekä mittakaava että keskitys itse, jotta
+   lava on aina kokonaan näkyvissä millä tahansa kuvasuhteella.
+   ============================================================ */
+const stage = document.getElementById('stage');
+function fit(){
+  const s = Math.min(innerWidth/1920, innerHeight/1080);
+  const x = Math.round((innerWidth  - 1920*s) / 2);
+  const y = Math.round((innerHeight - 1080*s) / 2);
+  stage.style.transform = 'translate('+x+'px,'+y+'px) scale('+s+')';
+}
+addEventListener('resize', fit); fit();
+
+/* Kirkkaus — kuvaajalle. Käytä tätä äläkä monitorin himmennystä:
+   monitorin PWM-himmennys lyö kameran sulkijaa vastaan. */
+let bri = 1.0;
+function setBri(v){
+  bri = Math.min(1.4, Math.max(0.5, v));
+  document.documentElement.style.setProperty('--bri', bri.toFixed(2));
+  document.getElementById('hudBri').textContent = Math.round(bri*100)+' %';
+}
+
+/* ============================================================
+   SOVELLUKSET
+   ============================================================ */
+const SOVELLUKSET = [
+  {id:'klatter',   kirjain:'K', vari:'--klatter',   nimi:'Klatter'},
+  {id:'posthaus',  kirjain:'P', vari:'--posthaus',  nimi:'Posthaus'},
+  {id:'engine',    kirjain:'V', vari:'--vessel',    nimi:'Vessel Engine'},
+  {id:'chisel',    kirjain:'C', vari:'--chisel',    nimi:'Chisel'},
+  {id:'patina',    kirjain:'A', vari:'--patina',    nimi:'Patina'},
+  {id:'depot',     kirjain:'D', vari:'--depot',     nimi:'Depot'},
+  {id:'tickr',     kirjain:'T', vari:'--tickr',     nimi:'Tickr'},
+  {id:'backloggr', kirjain:'B', vari:'--backloggr', nimi:'Backloggr'}
+];
+const APPS   = SOVELLUKSET.map(a=>a.id);
+const FLURRY = ['engine','chisel','klatter','patina','backloggr','depot','posthaus','tickr'];
+
+function show(app){
+  APPS.forEach(a=> document.getElementById(a).classList.toggle('on', a===app));
+  document.querySelectorAll('.tbicon').forEach(i=> i.classList.toggle('act', i.dataset.app===app));
+}
+function hideAll(){ show(null); }
+
+/* tehtäväpalkki */
+(function(){
+  const tb = document.getElementById('taskbar');
+  tb.innerHTML = SOVELLUKSET.map(a=>
+    '<div class="tbicon" data-app="'+a.id+'" style="background:var('+a.vari+')">'+
+      '<span>'+a.kirjain+'</span>'+
+      '<img src="assets/icon_'+a.id+'.png" alt="" onerror="this.remove()" '+
+        'onload="this.parentNode.style.background=\'none\';this.parentNode.querySelector(\'span\').style.display=\'none\'">'+
+      (a.id==='klatter'||a.id==='backloggr' ? '<em data-count="'+a.id+'"></em>' : '')+
+    '</div>').join('') +
+    '<div id="tray"><span class="mono">⬤ 41 GB</span><span class="mono">GPU 71 %</span>'+
+    '<span id="clock" class="mono">2:58</span></div>';
+  tb.addEventListener('click', e=>{
+    const ic = e.target.closest('.tbicon');
+    if(ic){ stopFlurry(); show(ic.dataset.app); }
+  });
+})();
+
+/* ============================================================
+   VILINÄ
+   ============================================================ */
+let flurryTimer=null, flurryIdx=0, flurrySpeed=1.0;
+function startFlurry(){
+  stopFlurry();
+  let step = 0;
+  const tick = ()=>{
+    show(FLURRY[flurryIdx % FLURRY.length]);
+    flurryIdx++; step++;
+    const base = Math.max(340, 1100 - step*52);   // kiihtyy 1,1 s → 0,34 s
+    flurryTimer = setTimeout(tick, base / flurrySpeed);
+  };
+  tick();
+}
+function stopFlurry(){ if(flurryTimer){ clearTimeout(flurryTimer); flurryTimer=null; } }
+
+/* ============================================================
+   ILMOITUKSET
+   ============================================================ */
+function note(count, sub, flash){
+  const box = document.getElementById('notes');
+  while(box.children.length >= 3) box.removeChild(box.firstElementChild);
+  const d = document.createElement('div');
+  d.className = 'note' + (flash ? ' flash' : '');
+  d.innerHTML = '<div class="hd"><b>●</b> BACKLOGGR — GRIME-4 <i>nyt</i></div>'+
+    '<div class="big">'+count+'</div>'+
+    (sub ? '<div class="sub">'+sub+'</div>' : '');
+  d.onclick = ()=> d.remove();          // näyttelijä voi kuitata ilmoituksen
+  box.appendChild(d);
+  beep();
+}
+function clearNotes(){ document.getElementById('notes').innerHTML = ''; }
+
+let toastTimer=null;
+function toast(txt){
+  const t = document.getElementById('toast');
+  t.textContent = txt; t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('on'), 3200);
+}
+
+/* ============================================================
+   ÄÄNI
+   ============================================================ */
+let actx=null, muted=false;
+function beep(){
+  if(muted) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const t = actx.currentTime;
+    [0,.13].forEach((off,i)=>{
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type='sine'; o.frequency.value = i ? 1240 : 940;
+      g.gain.setValueAtTime(0, t+off);
+      g.gain.linearRampToValueAtTime(.16, t+off+.008);
+      g.gain.exponentialRampToValueAtTime(.0001, t+off+.11);
+      o.connect(g).connect(actx.destination); o.start(t+off); o.stop(t+off+.13);
+    });
+  }catch(e){}
+}
+function blip(){                        // hiljaisempi: oma viesti lähti
+  if(muted) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.type='sine'; o.frequency.value=660;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.07,t+.006);
+    g.gain.exponentialRampToValueAtTime(.0001,t+.09);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t+.1);
+  }catch(e){}
+}
+
+/* ============================================================
+   KELLO
+   ============================================================ */
+let clockBase={h:2,m:58}, clockStart=Date.now();
+function setClock(h,m,pulse){
+  clockBase={h:h,m:m}; clockStart=Date.now(); drawClock();
+  if(pulse){ const c=document.getElementById('clock');
+    c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse'); }
+}
+function kelloTeksti(){
+  const mins = Math.floor((Date.now()-clockStart)/60000);
+  let m = clockBase.m + mins, h = clockBase.h + Math.floor(m/60);
+  m = m % 60; h = ((h - 1) % 12) + 1;
+  return h + ':' + String(m).padStart(2,'0');
+}
+function drawClock(){ document.getElementById('clock').textContent = kelloTeksti(); }
+setInterval(drawClock, 1000);
+function aikaleima(){                   // 03:07 — viestien kellonaika
+  const t = kelloTeksti().split(':');
+  return String(t[0]).padStart(2,'0')+':'+t[1];
+}
+
+/* Tickr — juokseva ajastin */
+let tsec = 11*3600+47*60+33, tickrRun = true;
+setInterval(()=>{
+  if(!tickrRun) return;
+  tsec++;
+  const h=Math.floor(tsec/3600), m=Math.floor(tsec%3600/60), s=tsec%60;
+  document.getElementById('tickrTime').textContent =
+    String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}, 1000);
+document.getElementById('tickrBtn').onclick = function(){
+  tickrRun = !tickrRun;
+  this.textContent = tickrRun ? '■  PYSÄYTÄ' : '▶  JATKA';
+  this.classList.toggle('stopped', !tickrRun);
+  document.getElementById('tickrState').textContent = tickrRun
+    ? 'RUNNING — GRIME-4 / waste_room_01 / ENV ART'
+    : 'PAUSED — GRIME-4 / waste_room_01 / ENV ART';
+};
+
+/* ============================================================
+   KLATTER — chat. Näyttelijä voi kirjoittaa ja lähettää.
+   ============================================================ */
+const KANAVAT = {
+  'build-fails': { nimi:'# build-fails', lukematta:47,
+    aihe:'automaattiset build-ilmoitukset · 14 jäsentä',
+    viestit:[
+      {kuka:'QA Bot', aika:'02:31', tyyli:'bot', teksti:'Nightly build #4470 FAILED — packaging step exited 1.'},
+      {kuka:'T. Rautio', aika:'02:44', teksti:'kuka koskenut lightmap-asetuksiin'},
+      {kuka:'QA Bot', aika:'03:01', tyyli:'bot', teksti:'Nightly build #4471 FAILED — 331 known issues carried over.'},
+      {kuka:'QA Bot', aika:'03:03', tyyli:'err', teksti:'FATAL ERROR — renderer thread stopped responding (0x0000331F).'}
+    ]},
+  'prod-alerts': { nimi:'# prod-alerts', lukematta:112,
+    aihe:'tuotannon hälytykset · älä mykistä',
+    viestit:[
+      {kuka:'Monitor', aika:'01:12', tyyli:'bot', teksti:'Crash rate 4.1 % — threshold 0.5 %.'},
+      {kuka:'Monitor', aika:'02:50', tyyli:'bot', teksti:'Sector 3 frame time 41 ms (budget 16.6 ms).'},
+      {kuka:'Monitor', aika:'03:02', tyyli:'err', teksti:'331 sessions ended in crash in the last hour.'}
+    ]},
+  'art-review': { nimi:'# art-review', lukematta:9,
+    aihe:'ympäristötaiteen katselmus · torstaisin',
+    viestit:[
+      {kuka:'T. Rautio', aika:'22:14', teksti:'jätehuoneen valo on liian lämmin, se lukee kodikkaana'},
+      {kuka:'T. Rautio', aika:'22:15', teksti:'muuten hyvä. oikeasti hyvä.'},
+      {kuka:'Producer', aika:'23:40', teksti:'ei ehditä iteroida. lukitaan tämä.'}
+    ]},
+  'milestone-4': { nimi:'# milestone-4', lukematta:28,
+    aihe:'GRIME-4 · deadline 2 vrk',
+    viestit:[
+      {kuka:'Producer', aika:'19:02', teksti:'muistutus: milestone 4 lukitaan perjantaina klo 9'},
+      {kuka:'Producer', aika:'23:41', teksti:'kaikki mikä ei ole depotissa klo 9 ei ole olemassa'}
+    ]},
+  'general': { nimi:'# general', lukematta:0,
+    aihe:'koko studio · 88 jäsentä',
+    viestit:[
+      {kuka:'HR', aika:'18:00', teksti:'Muistattehan täyttää työhyvinvointikyselyn! Vie 2 minuuttia 🙂'},
+      {kuka:'T. Rautio', aika:'18:02', teksti:'😐'}
+    ]},
+  'dm-producer': { nimi:'Producer', lukematta:21, dm:true,
+    aihe:'yksityisviesti',
+    viestit:[
+      {kuka:'Producer', aika:'23:41', teksti:'tarvitaan jätehuone aamuksi'},
+      {kuka:'Producer', aika:'02:12', teksti:'miten menee'},
+      {kuka:'Producer', aika:'03:02', teksti:'mike are you still on this? need the waste room by morning'},
+      {kuka:'Producer', aika:'03:03', teksti:'?'}
+    ]},
+  'dm-rautio': { nimi:'T. Rautio', lukematta:6, dm:true,
+    aihe:'yksityisviesti',
+    viestit:[
+      {kuka:'T. Rautio', aika:'02:44', teksti:'oletko vielä siellä'},
+      {kuka:'T. Rautio', aika:'02:45', teksti:'mene kotiin'},
+      {kuka:'T. Rautio', aika:'03:02', teksti:'lighting pass looks off in sector 3. katson aamulla.'}
+    ]},
+  'dm-qabot': { nimi:'QA Bot', lukematta:331, dm:true,
+    aihe:'automaatti · ei vastauksia',
+    viestit:[
+      {kuka:'QA Bot', aika:'02:58', tyyli:'bot', teksti:'You have 331 open issues assigned.'},
+      {kuka:'QA Bot', aika:'03:01', tyyli:'bot', teksti:'Reminder: 331 open issues assigned.'},
+      {kuka:'QA Bot', aika:'03:03', tyyli:'bot', teksti:'Reminder: 331 open issues assigned.'}
+    ]}
+};
+
+/* Skriptatut vastaukset. Laukeavat kun Mike lähettää viestin. */
+const VASTAUKSET = {
+  'dm-producer': [
+    {kuka:'Producer', teksti:'ok. aamuksi.'},
+    {kuka:'Producer', teksti:'"melkein" ei ole tila jonka voin raportoida'},
+    {kuka:'Producer', teksti:'?'}
+  ],
+  'dm-rautio': [
+    {kuka:'T. Rautio', teksti:'mene nukkumaan'},
+    {kuka:'T. Rautio', teksti:'se ei parane tuijottamalla'}
+  ],
+  'build-fails': [
+    {kuka:'QA Bot', tyyli:'bot', teksti:'Nightly build #4472 QUEUED — 331 known issues carried over.'},
+    {kuka:'QA Bot', tyyli:'err', teksti:'FATAL ERROR — renderer thread stopped responding (0x0000331F).'}
+  ],
+  'art-review': [ {kuka:'T. Rautio', teksti:'👍'} ],
+  '*': [ {kuka:'QA Bot', tyyli:'bot', teksti:'Reminder: 331 open issues assigned.'} ]
+};
+const vastausIdx = {};
+let autoVastaus = true, vastausTimer = null;
+
+let kanava = 'build-fails';
+
+function avatarVari(kuka){
+  if(kuka==='Mike') return '#8FB6EA';
+  if(kuka==='QA Bot' || kuka==='Monitor') return '#7E8894';
+  if(kuka==='Producer') return '#C4402F';
+  if(kuka==='T. Rautio') return '#6E9E4F';
+  return '#8C6FA8';
+}
+function piirraKanavat(){
+  const el = document.getElementById('klChannels');
+  let h = '';
+  h += '<div class="ph" style="background:none;border:0">KANAVAT</div>';
+  for(const k in KANAVAT){ if(KANAVAT[k].dm) continue;
+    h += kanavaRivi(k); }
+  h += '<div class="ph" style="background:none;border:0;margin-top:8px">VIESTIT</div>';
+  for(const k in KANAVAT){ if(!KANAVAT[k].dm) continue;
+    h += kanavaRivi(k); }
+  el.innerHTML = h;
+}
+function kanavaRivi(k){
+  const c = KANAVAT[k];
+  return '<div class="row'+(k===kanava?' on':'')+'" data-ch="'+k+'">'+
+    '<span class="ic">'+(c.dm?'●':'#')+'</span>'+
+    (c.dm ? c.nimi : c.nimi.replace('# ','')) +
+    (c.lukematta ? '<span class="badge mono">'+c.lukematta+'</span>' : '')+'</div>';
+}
+function piirraViestit(){
+  const c = KANAVAT[kanava];
+  document.getElementById('klTitle').textContent = c.nimi;
+  document.getElementById('klTopic').textContent = c.aihe;
+  document.getElementById('kl-input').placeholder =
+    c.dm ? 'Viesti — '+c.nimi : 'Viesti kanavalle '+c.nimi;
+  document.getElementById('kl-feed').innerHTML = c.viestit.slice(-9).map(m=>
+    '<div class="msg '+(m.tyyli||'')+(m.kuka==='Mike'?' me':'')+'">'+
+      '<div class="av" style="background:'+avatarVari(m.kuka)+'">'+m.kuka.charAt(0)+'</div>'+
+      '<div class="bd"><div class="who">'+m.kuka+'<i>'+m.aika+'</i></div>'+
+      '<div class="txt">'+m.teksti+'</div></div></div>').join('');
+}
+function avaaKanava(k){
+  kanava = k;
+  KANAVAT[k].lukematta = 0;
+  clearTimeout(vastausTimer);
+  document.getElementById('kl-typing').textContent = '';
+  piirraKanavat(); piirraViestit(); paivitaBadget();
+}
+function laheta(){
+  const inp = document.getElementById('kl-input');
+  const t = inp.value.trim();
+  if(!t) return;
+  KANAVAT[kanava].viestit.push({kuka:'Mike', aika:aikaleima(), teksti:t});
+  inp.value = '';
+  piirraViestit(); blip();
+  if(autoVastaus) ajastaVastaus();
+}
+function ajastaVastaus(){
+  const jono = VASTAUKSET[kanava] || VASTAUKSET['*'];
+  const i = vastausIdx[kanava] || 0;
+  const v = jono[Math.min(i, jono.length-1)];
+  vastausIdx[kanava] = i + 1;
+  const tip = document.getElementById('kl-typing');
+  const ch = kanava;
+  clearTimeout(vastausTimer);
+  vastausTimer = setTimeout(()=>{
+    if(kanava!==ch) return;
+    tip.textContent = v.kuka + ' kirjoittaa…';
+    vastausTimer = setTimeout(()=>{
+      if(kanava!==ch) return;
+      tip.textContent = '';
+      KANAVAT[ch].viestit.push({kuka:v.kuka, aika:aikaleima(), teksti:v.teksti, tyyli:v.tyyli});
+      piirraViestit(); beep();
+    }, 1900);
+  }, 1400);
+}
+document.getElementById('klChannels').addEventListener('click', e=>{
+  const r = e.target.closest('[data-ch]'); if(r) avaaKanava(r.dataset.ch);
+});
+document.getElementById('klSend').onclick = laheta;
+document.getElementById('kl-input').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ e.preventDefault(); laheta(); }
+});
+document.getElementById('kl-input').addEventListener('focus', ()=>
+  document.getElementById('hud').classList.add('typing'));
+document.getElementById('kl-input').addEventListener('blur', ()=>
+  document.getElementById('hud').classList.remove('typing'));
+
+function paivitaBadget(){
+  let kl = 0; for(const k in KANAVAT) kl += KANAVAT[k].lukematta;
+  const e1 = document.querySelector('[data-count="klatter"]');
+  if(e1){ e1.textContent = kl > 99 ? '99+' : kl; e1.style.display = kl ? '' : 'none'; }
+  const e2 = document.querySelector('[data-count="backloggr"]');
+  if(e2) e2.textContent = document.getElementById('sideUrgent').textContent;
+}
+
+/* ============================================================
+   POSTHAUS — klikattava lukunäkymä
+   ============================================================ */
+const POSTI = [
+  {from:'build-system', subj:'[AUTOMATED] Build 4471 failed — 331 known issues', t:'03:01', un:true,
+   body:'Job: nightly-4471\nBranch: //grimeproject/main\nStep: packaging → FAILED (exit 1)\n\n331 known issues carried over from 4470.\nRenderer thread stopped responding: 0x0000331F\n\nAssigned to: mike'},
+  {from:'qa-triage', subj:'URGENT: fatal error on waste_room_01', t:'02:58', un:true,
+   body:'Scene waste_room_01 crashes on reload after material edit.\nRepro 5/5. Blocking milestone 4.\n\nPriority raised to URGENT.'},
+  {from:'production', subj:'RE: RE: RE: milestone 4 — status?', t:'02:14', un:true,
+   body:'> > > mikä on jätehuoneen tilanne\n\nTarvitsen vastauksen ennen aamun palaveria.'},
+  {from:'build-system', subj:'[AUTOMATED] Build 4470 failed', t:'02:31', un:true,
+   body:'Job: nightly-4470 — FAILED\nStep: packaging'},
+  {from:'depot-admin', subj:'waste_room_01.scene locked by t.rautio', t:'01:44', un:true,
+   body:'File //grimeproject/main/content/environments/waste_room_01/waste_room_01.scene\nis exclusively checked out by t.rautio since 22:41.'},
+  {from:'hr', subj:'Wellbeing survey — 2 minutes of your time!', t:'18:00',
+   body:'Hei!\n\nHaluamme kuulla, miten voit. Kysely vie vain 2 minuuttia.\n\nKysymys 1/12: Koetko työmääräsi hallittavaksi?'},
+  {from:'build-system', subj:'[AUTOMATED] Build 4469 failed', t:'17:44',
+   body:'Job: nightly-4469 — FAILED'}
+];
+function piirraPosti(valittu){
+  document.getElementById('mailList').innerHTML = POSTI.map((m,i)=>
+    '<div class="mail'+(m.un?' un':'')+(i===valittu?' on':'')+'" data-i="'+i+'">'+
+      '<div class="from">'+m.from+'</div><div class="subj">'+m.subj+'</div>'+
+      '<div class="t">'+m.t+'</div></div>').join('');
+  const lukematta = POSTI.filter(m=>m.un).length;
+  document.getElementById('phCount').textContent = (2424 + lukematta).toLocaleString('fi-FI');
+}
+document.getElementById('mailList').addEventListener('click', e=>{
+  const r = e.target.closest('[data-i]'); if(!r) return;
+  const i = +r.dataset.i, m = POSTI[i];
+  m.un = false; piirraPosti(i);
+  const rd = document.getElementById('mailRead');
+  rd.style.flex = '0 0 420px'; rd.style.height = '420px';
+  rd.innerHTML = '<div class="ph">'+m.from+' — '+m.t+'</div>'+
+    '<div style="padding:20px 26px"><div style="font-size:16px;color:var(--text);margin-bottom:14px">'+
+    m.subj+'</div><div class="mono" style="font-size:12.5px;color:var(--dim);line-height:1.8;'+
+    'white-space:pre-wrap">'+m.body+'</div></div>';
+});
+piirraPosti(-1);
+
+/* ============================================================
+   BACKLOGGR — klikattavat tiketit
+   ============================================================ */
+const SUMS = [
+  'Renderer thread stops responding on scene load',
+  'waste_room_01 — lightmap bake never completes',
+  'NavMesh missing on props_debris layer',
+  'Memory leak in material streaming',
+  'FATAL: null reference on flicker_tube_01',
+  'Collision box inverted — player falls through floor',
+  'Audio occlusion ignores geo_walls',
+  'Texture pop-in on SM_bin_rusted_02',
+  'Build 4471 fails on packaging step',
+  'Shadow acne on emergency_red light',
+  'Crash on scene reload after material edit',
+  'Decals render behind geometry',
+  'Editor freezes when selecting SM_bag_pile_03',
+  'Lightmap UV overlap warning ×331',
+  'Frame time spike 41 ms in sector 3'
+];
+function fillTickets(n){
+  const el = document.getElementById('ticketList');
+  let h = '';
+  for(let i=0;i<Math.min(n,14);i++){
+    h += '<div class="ticket" data-t="'+i+'"><span class="key">GRIME-'+(4400+i*7)+'</span>'+
+      '<span class="sum">'+SUMS[i%SUMS.length]+'</span>'+
+      '<span class="tag">URGENT</span><span class="who">M</span></div>';
+  }
+  el.innerHTML = h;
+  document.getElementById('sideUrgent').textContent = n;
+  document.getElementById('bl-detail').classList.remove('on');
+  paivitaBadget();
+}
+document.getElementById('ticketList').addEventListener('click', e=>{
+  const r = e.target.closest('[data-t]'); if(!r) return;
+  document.querySelectorAll('#ticketList .ticket').forEach(t=>t.classList.remove('on'));
+  r.classList.add('on');
+  const i = +r.dataset.t;
+  const d = document.getElementById('bl-detail');
+  d.classList.add('on');
+  d.innerHTML = '<div class="ph">GRIME-'+(4400+i*7)+' <span class="r">URGENT · avoin 31 vrk</span></div>'+
+    '<div style="padding:20px 22px">'+
+    '<div style="font-size:16px;color:var(--text);line-height:1.4;margin-bottom:18px">'+SUMS[i%SUMS.length]+'</div>'+
+    '<div class="prop"><b>Tila</b><span class="v">In Progress</span></div>'+
+    '<div class="prop"><b>Vastuuhenkilö</b><span class="v">mike</span></div>'+
+    '<div class="prop"><b>Sprint</b><span class="v">31</span></div>'+
+    '<div class="prop"><b>Epic</b><span class="v">waste room</span></div>'+
+    '<div class="prop"><b>Estää</b><span class="v">GRIME-4331</span></div>'+
+    '<div class="ph" style="margin:18px 0 8px">KUVAUS</div>'+
+    '<div class="mono" style="font-size:12px;color:var(--dim);line-height:1.8;padding:0 22px">'+
+    'Repro 5/5 on waste_room_01.<br>Blocking milestone 4.<br>Carried over from sprint 30, 29, 28.</div>'+
+    '</div>';
+});
+
+/* ============================================================
+   VESSEL ENGINE — klikattava hierarkia, inspector, konsoli, play
+   ============================================================ */
+const OBJEKTIT = {
+  'waste_room_01': {taso:0, tyyppi:'Scene Root', mesh:'—', mat:'—',
+                    pos:[0,0,0], tris:'1 204 118', lod:'—'},
+  'geo_walls':     {taso:1, tyyppi:'Group', mesh:'—', mat:'—', pos:[0,0,0], tris:'412 008', lod:'—'},
+  'wall_stain_a':  {taso:2, tyyppi:'Static Mesh', mesh:'SM_wall_stain_a', mat:'M_grime_04',
+                    pos:[-3.310,0.000,1.204], tris:'2 448', lod:'0 / 3'},
+  'wall_stain_b':  {taso:2, tyyppi:'Static Mesh', mesh:'SM_wall_stain_b', mat:'M_grime_04',
+                    pos:[2.140,0.000,1.204], tris:'2 108', lod:'0 / 3'},
+  'props_debris':  {taso:1, tyyppi:'Group', mesh:'—', mat:'—', pos:[0,0,0], tris:'331 402', lod:'—'},
+  'bin_rusted_01': {taso:2, tyyppi:'Static Mesh', mesh:'SM_bin_rusted_01', mat:'MI_metal_rust_02',
+                    pos:[-4.020,0.000,0.000], tris:'22 406', lod:'0 / 3'},
+  'bin_rusted_02': {taso:2, tyyppi:'Static Mesh', mesh:'SM_bin_rusted_02', mat:'MI_metal_rust_02',
+                    pos:[-2.880,0.000,0.000], tris:'22 406', lod:'0 / 3'},
+  'bag_pile_03':   {taso:2, tyyppi:'Static Mesh', mesh:'SM_bag_pile_03', mat:'M_plastic_worn',
+                    pos:[3.310,0.000,0.000], tris:'48 112', lod:'0 / 2'},
+  'lighting':      {taso:1, tyyppi:'Group', mesh:'—', mat:'—', pos:[0,0,0], tris:'—', lod:'—'},
+  'flicker_tube_01':{taso:2, tyyppi:'Rect Light', mesh:'—', mat:'—',
+                    pos:[0.000,2.740,0.310], tris:'—', lod:'—'},
+  'emergency_red': {taso:2, tyyppi:'Point Light', mesh:'—', mat:'—',
+                    pos:[4.120,2.310,-1.880], tris:'—', lod:'—'}
+};
+let valittu = 'wall_stain_a';
+
+function piirraHierarkia(){
+  document.getElementById('hierList').innerHTML = Object.keys(OBJEKTIT).map(id=>{
+    const o = OBJEKTIT[id];
+    const merkki = o.tyyppi==='Group' || o.tyyppi==='Scene Root' ? '▾'
+                 : o.tyyppi.indexOf('Light')>=0 ? '💡' : '△';
+    return '<div class="row'+(id===valittu?' on':'')+'" data-obj="'+id+'" '+
+      'style="padding-left:'+(14+o.taso*20)+'px"><span class="ic">'+merkki+'</span>'+id+'</div>';
+  }).join('');
+}
+function piirraInspector(){
+  const o = OBJEKTIT[valittu];
+  document.getElementById('inspName').textContent = valittu;
+  document.getElementById('inspBody').innerHTML =
+    '<div class="prop"><b>'+valittu+'</b><span class="v">'+o.tyyppi+'</span></div>'+
+    '<div class="ph" style="margin-top:8px">TRANSFORM</div>'+
+    '<div class="prop"><b>Position</b><span class="xyz">'+
+      '<i data-ax="X">'+o.pos[0].toFixed(3)+'</i><i data-ax="Y">'+o.pos[1].toFixed(3)+
+      '</i><i data-ax="Z">'+o.pos[2].toFixed(3)+'</i></span></div>'+
+    '<div class="prop"><b>Rotation</b><span class="xyz">'+
+      '<i data-ax="X">0.000</i><i data-ax="Y">0.000</i><i data-ax="Z">0.000</i></span></div>'+
+    '<div class="prop"><b>Scale</b><span class="xyz">'+
+      '<i data-ax="X">1.000</i><i data-ax="Y">1.000</i><i data-ax="Z">1.000</i></span></div>'+
+    '<div class="ph" style="margin-top:10px">MESH RENDERER</div>'+
+    '<div class="prop"><b>Mesh</b><span class="v">'+o.mesh+'</span></div>'+
+    '<div class="prop"><b>Material</b><span class="v">'+o.mat+'</span></div>'+
+    '<div class="prop"><b>Triangles</b><span class="v">'+o.tris+'</span></div>'+
+    '<div class="prop"><b>LOD</b><span class="v">'+o.lod+'</span></div>'+
+    '<div class="prop"><b>Cast shadows</b><span class="v">On</span></div>'+
+    '<div class="prop"><b>Lightmap UV</b><span class="v">UV1</span></div>'+
+    '<div class="ph" style="margin-top:10px">MATERIAL · '+(o.mat==='—'?'—':o.mat)+'</div>'+
+    '<div class="prop"><b>Roughness</b><span class="v">0.812</span></div>'+
+    '<div class="prop"><b>Metallic</b><span class="v">0.031</span></div>'+
+    '<div class="prop"><b>Tiling</b><span class="v">3.31</span></div>'+
+    '<div class="prop"><b>Emissive</b><span class="v">0.000</span></div>'+
+    '<div class="ph" style="margin-top:10px">LIGHTMAP BAKE</div>'+
+    '<div style="padding:8px 14px"><div style="height:7px;background:var(--line);border-radius:4px;overflow:hidden">'+
+    '<div style="height:100%;width:31%;background:var(--tickr)"></div></div>'+
+    '<div class="mono" style="font-size:11.5px;color:var(--dim2);margin-top:7px">'+
+    'baking… 31 % — est. 4 h 12 min</div></div>';
+}
+function valitse(id){
+  valittu = id;
+  piirraHierarkia(); piirraInspector();
+  document.querySelectorAll('#vprops i').forEach(p=>
+    p.classList.toggle('sel', p.dataset.id===id));
+}
+document.getElementById('hierList').addEventListener('click', e=>{
+  const r = e.target.closest('[data-obj]'); if(r) valitse(r.dataset.obj);
+});
+document.getElementById('vprops').addEventListener('click', e=>{
+  const p = e.target.closest('[data-id]'); if(p) valitse(p.dataset.id);
+});
+
+/* työkalunapit */
+document.querySelectorAll('#engine .tool[data-tool]').forEach(t=> t.onclick = ()=>{
+  document.querySelectorAll('#engine .tool[data-tool]').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+});
+document.getElementById('eng-pivot').onclick = function(){ this.classList.toggle('on');
+  this.textContent = this.classList.contains('on') ? 'Center' : 'Pivot'; };
+document.getElementById('eng-local').onclick = function(){ this.classList.toggle('on');
+  this.textContent = this.classList.contains('on') ? 'Global' : 'Local'; };
+
+/* play mode */
+let playing = false;
+function setPlay(p){
+  playing = p;
+  document.getElementById('viewport').classList.toggle('play', p);
+  document.getElementById('eng-play').classList.toggle('on', p);
+  document.querySelectorAll('#engine [data-vtab]').forEach(t=>
+    t.classList.toggle('on', t.dataset.vtab === (p?'game':'scene')));
+  piirraStats();
+}
+document.getElementById('eng-play').onclick = ()=> setPlay(!playing);
+document.getElementById('eng-pause').onclick = ()=> setPlay(false);
+document.querySelectorAll('#engine [data-vtab]').forEach(t=> t.onclick = ()=>{
+  if(t.dataset.vtab==='game') setPlay(true);
+  else if(t.dataset.vtab==='scene') setPlay(false);
+});
+function piirraStats(){
+  document.getElementById('engStats').innerHTML = playing
+    ? 'FPS <b>24.1</b> (41.4 ms)  ·  Tris <b>1.20 M</b>  ·  Draw calls <b>1 331</b><br>'+
+      'SetPass <b>208</b>  ·  Batches <b>412</b>  ·  VRAM <b>9.4 GB</b>  ·  <span style="color:#C4402F">BUDGET 16.6 ms</span>'
+    : 'Tris <b>1.20 M</b>  ·  Verts <b>780 k</b>  ·  Objects <b>34</b><br>'+
+      'Lightmaps <b>3</b>  ·  Bake <b>31 %</b>  ·  VRAM <b>9.4 GB</b>';
+}
+
+/* alalaidan välilehdet */
+const LOGS = [
+  ['warn','03:01','[Lightmap] UV overlap on SM_wall_stain_a — 331 warnings suppressed'],
+  ['',    '03:01','[Asset] Imported SM_bin_rusted_02.fbx (4.2 MB) — 22 406 tris'],
+  ['warn','03:02','[Shader] M_grime_04 recompiled — 2 variants stripped'],
+  ['',    '03:02','[Depot] waste_room_01.scene is locked by t.rautio'],
+  ['err', '03:03','[Renderer] FATAL ERROR — thread stopped responding (0x0000331F)'],
+  ['',    '03:03','[Bake] Resuming lightmap bake… 31 %'],
+  ['warn','03:03','[Physics] Collision mesh non-convex on SM_bag_pile_03']
+];
+const KANSIOT = ['Content','├ environments','│ └ waste_room_01','├ materials','├ textures','├ meshes','└ blueprints'];
+const ASSETIT = [
+  ['SM_bin_rusted_01','MESH','#3A322A'],['SM_bin_rusted_02','MESH','#3A322A'],
+  ['SM_bag_pile_03','MESH','#2E3230'],['SM_wall_stain_a','MESH','#332E28'],
+  ['M_grime_04','MAT','#4A3E30'],['MI_metal_rust_02','MAT','#5A3A28'],
+  ['T_wall_stain_a_BC','TEX','#6B5B49'],['T_wall_stain_a_N','TEX','#7E7EAF'],
+  ['T_wall_stain_a_ORM','TEX','#4A4A4A'],['T_rust_fine_BC','TEX','#6A3E2A'],
+  ['BP_door_waste','BP','#2E3A4A'],['waste_room_01','SCENE','#26303C']
+];
+function naytaDock(tab){
+  document.querySelectorAll('#engine [data-dtab]').forEach(t=> t.classList.toggle('on', t.dataset.dtab===tab));
+  const proj = tab==='project';
+  document.getElementById('eng-folders').style.display = proj ? '' : 'none';
+  document.getElementById('assetGrid').style.display   = proj ? '' : 'none';
+  document.getElementById('engineConsole').style.display = proj ? 'none' : '';
+  if(!proj){
+    let rivit = LOGS;
+    if(tab==='profiler') rivit = [['','03:03','[Profiler] Capturing frame… sector 3 spike 41.4 ms'],
+      ['warn','03:03','[Profiler] GPU bound — shadow pass 18.2 ms']];
+    if(tab==='depot') rivit = [['warn','03:03','[Depot] 331 files pending in changelist 4471'],
+      ['err','03:03','[Depot] Cannot submit: waste_room_01.scene locked by t.rautio']];
+    document.getElementById('engineConsole').innerHTML = rivit.map(l=>
+      '<div class="'+l[0]+'"><span class="t">'+l[1]+'</span>'+l[2]+'</div>').join('');
+  }
+}
+document.querySelectorAll('#engine [data-dtab]').forEach(t=> t.onclick = ()=> naytaDock(t.dataset.dtab));
+document.getElementById('folderList').innerHTML = KANSIOT.map((k,i)=>
+  '<div class="row'+(i===2?' on':'')+'"><span class="ic">▪</span>'+k+'</div>').join('');
+document.getElementById('assetGrid').innerHTML = ASSETIT.map((a,i)=>
+  '<div class="ass'+(i===4?' on':'')+'"><div class="th" style="background:linear-gradient(150deg,'+
+  a[2]+',#111)"><img src="assets/thumb_'+a[0]+'.png" alt="" onerror="this.remove()">'+
+  '<b>'+a[1]+'</b></div>'+a[0]+'</div>').join('');
+document.getElementById('assetGrid').addEventListener('click', e=>{
+  const a = e.target.closest('.ass'); if(!a) return;
+  document.querySelectorAll('#assetGrid .ass').forEach(x=>x.classList.remove('on'));
+  a.classList.add('on');
+});
+
+/* ============================================================
+   CHISEL — varjostustilat
+   ============================================================ */
+document.querySelectorAll('#chisel [data-shade]').forEach(b=> b.onclick = ()=>{
+  document.querySelectorAll('#chisel [data-shade]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const v = document.getElementById('chisel-view');
+  v.className = 'shade-'+b.dataset.shade;
+});
+document.querySelectorAll('#chisel .tool[data-cs]').forEach(t=> t.onclick = ()=>{
+  document.querySelectorAll('#chisel .tool[data-cs]').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+});
+
+/* ============================================================
+   PATINA — tasot, näkyvyys ja kanavat
+   ============================================================ */
+const TASOT = [
+  {nimi:'Leaks — dripping',  bl:'Multiply', vari:'#2A2318', nak:true,
+   maali:'linear-gradient(178deg, rgba(20,14,8,.85) 0%, rgba(20,14,8,0) 46%)'},
+  {nimi:'Rust — fine',       bl:'Overlay',  vari:'#6A3E2A', nak:true,
+   maali:'radial-gradient(60% 40% at 22% 68%, rgba(120,60,30,.6), transparent 70%)'},
+  {nimi:'Dirt — cavities',   bl:'Multiply', vari:'#332A20', nak:true,
+   maali:'radial-gradient(80% 70% at 50% 88%, rgba(24,18,12,.75), transparent 65%)'},
+  {nimi:'Mould — edges',     bl:'Multiply', vari:'#2E3A2A', nak:true,
+   maali:'radial-gradient(50% 60% at 84% 40%, rgba(38,58,38,.55), transparent 70%)'},
+  {nimi:'Paint — chipped',   bl:'Normal',   vari:'#4A5850', nak:true,
+   maali:'linear-gradient(96deg, rgba(74,88,80,.35) 0%, transparent 58%)'},
+  {nimi:'Concrete — base',   bl:'Normal',   vari:'#6B655C', nak:true,
+   maali:'linear-gradient(160deg,#6B655C,#3A362F)'},
+  {nimi:'Fill — grey',       bl:'Normal',   vari:'#4A4A4A', nak:true,
+   maali:'linear-gradient(0deg,#3A3A3A,#4A4A4A)'}
+];
+const SHELF = [
+  ['Grunge Leaks 04','linear-gradient(178deg,#241C12,#4A3F2E)'],
+  ['Rust Fine','linear-gradient(150deg,#7A4426,#3A1F12)'],
+  ['Dirt Wide','linear-gradient(150deg,#3E3428,#191510)'],
+  ['Concrete Cast','linear-gradient(150deg,#6E685E,#38342D)'],
+  ['Mould Edge','linear-gradient(150deg,#37472F,#1A2016)'],
+  ['Metal Scratched','linear-gradient(150deg,#7E838A,#33373C)'],
+  ['Plastic Worn','linear-gradient(150deg,#4E5A52,#22271F)'],
+  ['Water Stain','linear-gradient(150deg,#4A4E44,#232620)']
+];
+function piirraPatina(){
+  document.getElementById('patLayers').innerHTML = TASOT.map((t,i)=>
+    '<div class="layer'+(i===0?' on':'')+(t.nak?'':' hid')+'" data-l="'+i+'">'+
+      '<span class="eye" data-eye="'+i+'">'+(t.nak?'◉':'○')+'</span>'+
+      '<span class="sw" style="background:'+t.vari+'"></span>'+t.nimi+
+      '<span class="bl">'+t.bl+'</span></div>').join('');
+  document.getElementById('patCount').textContent = TASOT.length;
+  document.getElementById('patRender').innerHTML = TASOT.slice().reverse().map(t=>
+    t.nak ? '<div style="position:absolute;inset:0;background:'+t.maali+'"></div>' : '').join('');
+}
+document.getElementById('patLayers').addEventListener('click', e=>{
+  const eye = e.target.closest('[data-eye]');
+  if(eye){ const i=+eye.dataset.eye; TASOT[i].nak = !TASOT[i].nak; piirraPatina(); return; }
+  const l = e.target.closest('[data-l]');
+  if(l){ document.querySelectorAll('#patLayers .layer').forEach(x=>x.classList.remove('on'));
+    l.classList.add('on'); }
+});
+document.getElementById('patShelf').innerHTML = SHELF.map(s=>
+  '<div class="smat"><div class="th" style="background:'+s[1]+'"></div>'+s[0]+'</div>').join('');
+document.querySelectorAll('#patina [data-pchan]').forEach(b=> b.onclick = ()=>{
+  document.querySelectorAll('#patina [data-pchan]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const c = b.dataset.pchan, r = document.getElementById('patRender');
+  r.style.filter = c==='rough' ? 'grayscale(1) contrast(1.5)'
+    : c==='normal' ? 'hue-rotate(190deg) saturate(2.4) brightness(1.5)'
+    : c==='height' ? 'grayscale(1) brightness(.7) contrast(2)' : 'none';
+});
+
+/* ============================================================
+   DEPOT — tiedostot, lukittu tiedosto antaa virheen
+   ============================================================ */
+const TIEDOSTOT = [
+  ['lock','waste_room_01.scene','t.rautio — LOCKED','#331'],
+  ['edit','M_grime_04.mat','mike','#41'],
+  ['edit','T_wall_stain_a_BC.tga','mike','#12'],
+  ['edit','T_wall_stain_a_N.tga','mike','#12'],
+  ['edit','T_wall_stain_a_ORM.tga','mike','#12'],
+  ['out','SM_bin_rusted_01.fbx','—','#8'],
+  ['out','SM_bin_rusted_02.fbx','—','#9'],
+  ['','SM_bag_pile_03.fbx','—','#4'],
+  ['','BP_door_waste.asset','—','#17'],
+  ['','lighting_bake.exr','—','#3'],
+  ['','waste_room_01_nav.bin','—','#2'],
+  ['','README.md','—','#1']
+];
+document.getElementById('depotFiles').innerHTML = TIEDOSTOT.map((f,i)=>
+  '<div class="file '+f[0]+'" data-f="'+i+'"><span class="st">'+
+  (f[0]==='lock'?'🔒':f[0]==='edit'?'✎':f[0]==='out'?'↓':'·')+'</span>'+
+  '<span class="nm">'+f[1]+'</span><span class="who">'+f[2]+'</span>'+
+  '<span class="rev">'+f[3]+'</span></div>').join('');
+let depotValittu = 0;
+document.getElementById('depotFiles').addEventListener('click', e=>{
+  const f = e.target.closest('[data-f]'); if(!f) return;
+  document.querySelectorAll('#depotFiles .file').forEach(x=>x.classList.remove('on'));
+  f.classList.add('on'); depotValittu = +f.dataset.f;
+});
+document.getElementById('dp-checkout').onclick = ()=>{
+  const f = TIEDOSTOT[depotValittu];
+  if(f[0]==='lock') toast('Cannot check out '+f[1]+' — exclusively locked by t.rautio since 22:41');
+  else toast('Checked out '+f[1]+' to changelist 4471');
+};
+document.getElementById('dp-submit').onclick = ()=>
+  toast('Submit failed — 1 of 331 files locked by another user (waste_room_01.scene)');
+document.getElementById('dp-get').onclick = ()=>
+  toast('Sync: 331 files up to date, 2 need resolve');
+
+/* ============================================================
+   CUET
+   ============================================================ */
+const CUES = [
+  {n:'perustila — työpöytä'},
+  {n:'SOVELLUSVILINÄ'},
+  {n:'ILMOITUS 1 — 3 NEW URGENT REQUESTS'},
+  {n:'PELIMOOTTORI — jätehuone'},
+  {n:'ILMOITUS 2 — 13 (laukeaa myös hiiren liikkeestä)'},
+  {n:'KELLO → 3:31'},
+  {n:'ILMOITUS 3 — 31 URGENT REQUESTS'}
+];
+let cue = 0, armMouse = false;
+
+function goto(n){
+  cue = n; armMouse = false;
+  document.getElementById('hudCue').textContent = n;
+  document.getElementById('hudName').textContent = CUES[n] ? CUES[n].n : '';
+
+  /* Jokainen cue on itsenäinen tila: saman numeron painaminen
+     uudestaan tuottaa saman kuvan eikä kasaa ilmoituksia. */
+  if(n===0){ stopFlurry(); clearNotes(); hideAll(); fillTickets(3); setClock(2,58);
+             setPlay(false); naytaDock('console'); }
+
+  if(n===1){ clearNotes(); startFlurry(); }
+
+  if(n===2){ stopFlurry(); clearNotes(); show('klatter'); avaaKanava('build-fails');
+    note('3 NEW URGENT REQUESTS', 'Bug report… 331 known issues… fatal error.'); }
+
+  if(n===3){ stopFlurry(); clearNotes(); show('engine'); valitse('wall_stain_a'); }
+
+  if(n===4){ stopFlurry(); clearNotes(); show('engine');
+    note('13 NEW URGENT REQUESTS', null, true); }
+
+  /* Kello vaihtuu ilmoitus 2:n ollessa vielä ruudulla — ei tyhjennystä. */
+  if(n===5){ setClock(3,31,true); }
+
+  if(n===6){ stopFlurry(); clearNotes(); show('backloggr'); fillTickets(31);
+    note('31 URGENT REQUESTS', null, true); }
+}
+addEventListener('mousemove', ()=>{ if(armMouse){ armMouse=false; goto(4); } });
+
+/* ============================================================
+   NÄPPÄIMET — vaimennetaan kun näyttelijä kirjoittaa
+   ============================================================ */
+function kirjoittaa(){
+  const a = document.activeElement;
+  return !!a && (a.tagName==='INPUT' || a.tagName==='TEXTAREA' || a.isContentEditable);
+}
+addEventListener('keydown', e=>{
+  if(kirjoittaa()){
+    if(e.key==='Escape') document.activeElement.blur();
+    return;                       // operaattorin näppäimet pois käytöstä
+  }
+  const k = e.key.toLowerCase();
+  if(k===' '){ e.preventDefault(); goto(Math.min(cue+1, CUES.length-1)); }
+  else if(k>='0' && k<='6'){ goto(+k); }
+  else if(k==='arrowright'){ flurrySpeed = Math.min(3, flurrySpeed+0.1); updSpeed(); }
+  else if(k==='arrowleft'){  flurrySpeed = Math.max(0.3, flurrySpeed-0.1); updSpeed(); }
+  else if(k===']'){ setBri(bri + 0.05); }
+  else if(k==='['){ setBri(bri - 0.05); }
+  else if(k==='c'){ const off = document.body.classList.toggle('nocursor');
+    document.getElementById('hudCur').textContent = off ? 'POIS' : 'NÄKYY'; }
+  else if(k==='v'){ autoVastaus = !autoVastaus;
+    document.getElementById('hudReply').textContent = autoVastaus ? 'ON' : 'POIS'; }
+  else if(k==='b'){ document.getElementById('black').classList.toggle('on'); }
+  else if(k==='r'){ goto(0); }
+  else if(k==='h'){ document.getElementById('hud').classList.toggle('off'); }
+  else if(k==='m'){ muted=!muted;
+    document.getElementById('hudSound').textContent = muted?'POIS':'ON'; }
+  else if(k==='f'){ document.documentElement.requestFullscreen?.(); }
+  else if(k==='a'){ armMouse = true;
+    document.getElementById('hudName').textContent = 'ODOTTAA HIIREN LIIKETTÄ → cue 4'; }
+});
+function updSpeed(){ document.getElementById('hudSpeed').textContent = flurrySpeed.toFixed(1)+'×'; }
+
+/* ============================================================
+   ALUSTUS
+   ============================================================ */
+piirraKanavat(); piirraViestit(); paivitaBadget();
+piirraHierarkia(); piirraInspector(); valitse('wall_stain_a');
+piirraStats(); naytaDock('console'); piirraPatina();
+setBri(1.0);
+goto(0);
+</script>
+
+<!--
+==================================================================
+GRAFIIKKA — pudota tiedostot assets/-kansioon, ei koodimuutoksia.
+Täydet ohjeet: BRIEF_GRAAFIKKO.md
+
+  engine_viewport_wasteroom.png   1280×720  JÄTEHUONE-RENDER (hero)
+                                            paikka lavalla: x 290, y 130
+  desktop.png                     1920×1080 työpöydän taustakuva
+  patina_wall.png                 910×810   seinäpinta Patinan esikatseluun
+  icon_<sovellus>.png             68×68     8 kpl tehtäväpalkkiin, ks. lista alla
+  thumb_<assetin nimi>.png        86×66     valinnaisia pikkukuvia
+                                            Vessel Enginen Project-välilehdelle
+
+  icon_klatter / icon_posthaus / icon_engine / icon_chisel /
+  icon_patina / icon_depot / icon_tickr / icon_backloggr
+
+HUOM: sovellusten käyttöliittymät ovat nyt eläviä ja klikattavia,
+joten niitä EI voi korvata koko ruudun PNG:llä — kuva estäisi
+klikkaukset. Ulkoasu tehdään CSS:ään tämän tiedoston alussa.
+==================================================================
+-->
+</body>
+</html>
