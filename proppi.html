@@ -373,6 +373,59 @@ input{ -webkit-user-select:text; user-select:text; }
   font-size:13px; color:#E0A79E; display:none; box-shadow:0 10px 30px rgba(0,0,0,.6); }
 #toast.on{ display:block; animation:noteIn .2s ease-out; }
 
+/* --- GLITCH -------------------------------------------------
+   Kolme kerrosta lavan päällä + koko kuvan nykäisy #wrapissa.
+   Sisältöä ei kahdenneta: kaistat käyttävät difference-sekoitusta,
+   joka kääntää alla olevan kuvan ja lukeutuu siirtyneenä juovana.
+   Ei puhtaita valkoisia välähdyksiä — ne palaisivat kamerassa puhki.
+   ------------------------------------------------------------ */
+#glitch{ position:absolute; inset:0; z-index:80; pointer-events:none; display:none; }
+#glitch.on{ display:block; }
+
+#glitch .slices{ position:absolute; inset:0; mix-blend-mode:difference;
+  background:
+    linear-gradient(#8A9099 0 0) 0 12% / 100% 3.2% no-repeat,
+    linear-gradient(#4A5058 0 0) 0 34% / 100% 1.4% no-repeat,
+    linear-gradient(#6C7885 0 0) 0 57% / 100% 5.1% no-repeat,
+    linear-gradient(#3A3F46 0 0) 0 78% / 100% 2.2% no-repeat;
+  animation:gslice .28s steps(1) infinite; }
+@keyframes gslice{
+  0%  { background-position:0 12%, 0 34%, 0 57%, 0 78%; opacity:.92 }
+  25% { background-position:0 41%, 0  8%, 0 66%, 0 23%; opacity:.55 }
+  50% { background-position:0 71%, 0 55%, 0 17%, 0 88%; opacity:1 }
+  75% { background-position:0 29%, 0 82%, 0 44%, 0 61%; opacity:.38 }
+}
+
+#glitch .rgb{ position:absolute; inset:0; mix-blend-mode:screen; opacity:.45;
+  background:
+    linear-gradient(90deg,  rgba(196,64,47,.55), transparent 14%),
+    linear-gradient(270deg, rgba(47,168,199,.55), transparent 14%);
+  animation:grgb .17s steps(1) infinite; }
+@keyframes grgb{ 0%{ transform:translateX(-7px) } 50%{ transform:translateX(8px) } }
+
+#glitch .noise{ position:absolute; inset:0; opacity:.14;
+  background-image:
+    repeating-linear-gradient(0deg,  rgba(200,208,216,.5) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.5) 0 1px, transparent 1px 2px);
+  animation:gnoise .09s steps(1) infinite; }
+@keyframes gnoise{
+  0%  { background-position:0 0, 0 0 }
+  33% { background-position:3px 2px, 1px 0 }
+  66% { background-position:-2px 1px, 2px 3px }
+}
+
+/* Koko kuvan nykäisy. Tämä on #wrapissa eikä #stagessa, koska
+   #stagen transformin kirjoittaa fit() eikä animaatio saa syödä sitä. */
+#wrap.glitch{ animation:gwrap .22s steps(1) infinite; }
+@keyframes gwrap{
+  0%  { transform:none;                 filter:none }
+  20% { transform:translate(-7px,1px);  filter:hue-rotate(12deg) saturate(1.25) }
+  40% { transform:translate(5px,-2px);  filter:none }
+  55% { transform:translateY(0) scaleY(1.012); filter:invert(.14) }
+  75% { transform:translate(9px,0);     filter:contrast(1.5) }
+  90% { transform:translate(-3px,2px);  filter:none }
+}
+
 /* --- musta ruutu / operaattorin HUD ------------------------- */
 /* Molemmat lavan ULKOPUOLELLA ruutukoordinaateissa. */
 #black{ position:fixed; inset:0; background:#000; z-index:150; display:none; }
@@ -878,6 +931,8 @@ input{ -webkit-user-select:text; user-select:text; }
   <div id="notes"></div>
   <div id="toast"></div>
 
+  <div id="glitch"><div class="slices"></div><div class="rgb"></div><div class="noise"></div></div>
+
 </div></div>
 
 <div id="black"></div>
@@ -887,12 +942,13 @@ input{ -webkit-user-select:text; user-select:text; }
   <span class="sep">|</span>
   <span class="kirj"><b>NÄYTTELIJÄ KIRJOITTAA</b> — Esc palauttaa näppäimet</span>
   <span class="keys">␣ seur.</span>
-  <span class="keys">0–6 hyppy</span>
+  <span class="keys">0–6</span>
   <span class="keys">←→ vilinä <b id="hudSpeed">1.0×</b></span>
   <span class="keys">[] kirkkaus <b id="hudBri">100 %</b></span>
   <span class="sep keys">|</span>
   <span class="keys">A hiiri</span>
   <span class="keys">B musta</span>
+  <span class="keys">G glitch <b id="hudGlitch">purske</b></span>
   <span class="keys">C kursori <b id="hudCur">NÄKYY</b></span>
   <span class="keys">K kello <b id="hudKello">3:28</b></span>
   <span class="keys">V vastaus <b id="hudReply">ON</b></span>
@@ -1037,6 +1093,48 @@ function blip(){                        // hiljaisempi: oma viesti lähti
     g.gain.exponentialRampToValueAtTime(.0001,t+.09);
     o.connect(g).connect(actx.destination); o.start(t); o.stop(t+.1);
   }catch(e){}
+}
+function rahina(kesto){                 // glitchin kohina
+  if(muted) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const kest = (kesto||400)/1000, n = Math.floor(actx.sampleRate*kest);
+    const buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i] = (Math.random()*2-1) * (i%97 < 48 ? 1 : .25);
+    const src = actx.createBufferSource(); src.buffer = buf;
+    const bp = actx.createBiquadFilter(); bp.type='bandpass';
+    bp.frequency.value=1800; bp.Q.value=.7;
+    const g = actx.createGain(); const t = actx.currentTime;
+    g.gain.setValueAtTime(.16,t);
+    g.gain.exponentialRampToValueAtTime(.0001, t+kest);
+    src.connect(bp).connect(g).connect(actx.destination); src.start(t);
+  }catch(e){}
+}
+
+/* ============================================================
+   GLITCH — G purskeena, ⇧G jatkuvana
+   ============================================================ */
+let glitchTimer = null, glitchJatkuva = false;
+function glitchPaalle(){
+  document.getElementById('glitch').classList.add('on');
+  document.getElementById('wrap').classList.add('glitch');
+}
+function glitchPois(){
+  document.getElementById('glitch').classList.remove('on');
+  document.getElementById('wrap').classList.remove('glitch');
+}
+function glitchPurske(){
+  if(glitchJatkuva) return;
+  clearTimeout(glitchTimer);
+  const kesto = 360 + Math.round(Math.random()*300);   // 0,36–0,66 s
+  glitchPaalle(); rahina(kesto);
+  glitchTimer = setTimeout(glitchPois, kesto);
+}
+function glitchVaihda(){
+  glitchJatkuva = !glitchJatkuva;
+  clearTimeout(glitchTimer);
+  if(glitchJatkuva){ glitchPaalle(); rahina(700); } else glitchPois();
+  document.getElementById('hudGlitch').textContent = glitchJatkuva ? 'JATKUVA' : 'purske';
 }
 
 /* ============================================================
@@ -1679,6 +1777,7 @@ function goto(n){
      uudestaan tuottaa saman kuvan eikä kasaa ilmoituksia. */
   if(n===0){ stopFlurry(); clearNotes(); hideAll(); fillTickets(3);
              asetaKello(KELLO_ALKU); nollaaTickr();
+             if(glitchJatkuva) glitchVaihda(); else { clearTimeout(glitchTimer); glitchPois(); }
              setPlay(false); naytaDock('console'); }
 
   if(n===1){ clearNotes(); startFlurry(); }
@@ -1724,6 +1823,8 @@ addEventListener('keydown', e=>{
   else if(k==='v'){ autoVastaus = !autoVastaus;
     document.getElementById('hudReply').textContent = autoVastaus ? 'ON' : 'POIS'; }
   else if(k==='k'){ kelloNappi(); }
+  else if(k==='g'){ if(e.repeat) return;                  // ei automaattitoistoa
+    if(e.shiftKey) glitchVaihda(); else glitchPurske(); }
   else if(k==='b'){ document.getElementById('black').classList.toggle('on'); }
   else if(k==='r'){ goto(0); }
   else if(k==='h'){ document.getElementById('hud').classList.toggle('off'); }

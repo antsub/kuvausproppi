@@ -60,8 +60,9 @@ VÄLILYÖNTI  seuraava cue        A  viritä hiirilaukaisu (cue 4)
 0–6         hyppää cueen        B  musta ruutu (ottojen väli)
 ←  →        vilinän nopeus      C  kursori piiloon / näkyviin
 [  ]        ruudun kirkkaus     K  kello +1 min (3:31 → 3:26)
-R           alkuun              V  chatin autovastaus pois
-H           piilota palkki      M  ilmoitusääni pois
+R           alkuun              G  glitch-purske  (⇧G = jatkuva)
+H           piilota palkki      V  chatin autovastaus pois
+                                M  ilmoitusääni pois
                                 F  koko ruutu
 ```
 
@@ -71,6 +72,16 @@ hiirtä, ruutu vastaa. Operaattorin ei tarvitse osua painallusta millisekunnille
 **`[` ja `]`** säätävät ruudun kirkkautta 50–140 %. Käytä näitä äläkä monitorin
 omaa säätöä — monitorin himmennys on useimmiten PWM-pulssitusta, joka lyö kameran
 sulkijaa vastaan ja tuottaa vilkkuvan palkin. **Monitorin oma kirkkaus 100 %.**
+
+**`G`** laukaisee glitch-purskeen: koko kuva nykäisee, vaakakaistat kääntävät
+alla olevan kuvan nurin, reunoihin tulee puna-syaani sävyreuna ja kaiuttimesta
+kuuluu lyhyt rahina. Kesto vaihtelee 0,36–0,66 s satunnaisesti, joten peräkkäiset
+otot eivät näytä kloonatuilta. **`⇧G`** jättää glitchin päälle, kunnes painat
+uudestaan — käytä sitä, jos kohtaus tarvitsee pitkän hajoamisen.
+
+Glitch ei koskaan välähdä puhtaan valkoisena eikä mustana, joten se ei pala puhki
+eikä katoa. Ohjauspalkki jää glitchin ulkopuolelle, jotta operaattori näkee
+tilansa koko ajan. `R` ja cue 0 nollaavat myös glitchin.
 
 ### 5. Näyttelijä voi klikkailla
 
