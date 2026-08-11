@@ -60,7 +60,7 @@ VÄLILYÖNTI  seuraava cue        A  viritä hiirilaukaisu (cue 4)
 0–6         hyppää cueen        B  musta ruutu (ottojen väli)
 ←  →        vilinän nopeus      C  kursori piiloon / näkyviin
 [  ]        ruudun kirkkaus     K  kello +1 min (3:31 → 3:26)
-R           alkuun              G  glitch-purske  (⇧G = jatkuva)
+R           alkuun              G X Y Z  glitchit  (⇧ = jatkuva)
 H           piilota palkki      V  chatin autovastaus pois
                                 M  ilmoitusääni pois
                                 F  koko ruutu
@@ -73,16 +73,25 @@ hiirtä, ruutu vastaa. Operaattorin ei tarvitse osua painallusta millisekunnille
 omaa säätöä — monitorin himmennys on useimmiten PWM-pulssitusta, joka lyö kameran
 sulkijaa vastaan ja tuottaa vilkkuvan palkin. **Monitorin oma kirkkaus 100 %.**
 
-**`G`** laukaisee glitch-purskeen. Se ei ole viivoja kuvan päällä vaan oikeaa
-kuvan repeämistä: ruudusta otetaan kaksi pysäytyskuvaa, ne pilkotaan
-vaakakaistoiksi ja siirretään eri verran sivuun ja eri suuntiin sävytettyinä.
-Lopputuloksena kaistoissa näkyy oikeaa sisältöä väärässä kohdassa — konsolirivit
-ja paneelit repeytyvät irti paikaltaan. Päälle tulee lohkokorruptiota, vierivä
-juova, kohina ja lyhyt rahina kaiuttimesta.
+### Glitchit
 
-Kesto vaihtelee 0,36–0,66 s satunnaisesti, joten peräkkäiset otot eivät näytä
-kloonatuilta. **`⇧G`** jättää glitchin päälle, kunnes painat uudestaan — käytä
-sitä, jos kohtaus tarvitsee pitkän hajoamisen.
+Neljä eri tyyppiä, kukin omalla näppäimellään. Painallus = purske, **⇧ + sama
+näppäin** = jää päälle kunnes painat uudestaan. Toisen tyypin ⇧-näppäin vaihtaa
+tyyppiä lennossa.
+
+| Näppäin | Tyyppi | Miltä näyttää |
+|:---:|---|---|
+| **`G`** | repeytyminen | Vaakakaistat irtoavat paikaltaan: konsolirivit ja paneelit näkyvät väärässä kohdassa, lämpimänä ja kylmänä sävytettyinä |
+| **`X`** | blokkiintuminen | Pakkaus hajoaa. Makrolohkot sumentavat ja latistavat sisältöä, osa lohkoista tippuu kokonaan mustaksi. Kuva ei tärise — hajoaa paikallaan |
+| **`Y`** | kuva väärinpäin | Signaali kääntyy. Koko ruutu ylösalaisin ja peilikuvana, välissä käännettyjä kaistoja |
+| **`Z`** | sahalaita | Lomituksen kampa: joka toinen juovapari siirtyy vastakkaiseen suuntaan, jolloin jokainen tekstin reuna hajoaa puna-syaaniksi kammaksi. Päällä vino sahalaitarepeämä |
+
+Efektit eivät ole viivoja kuvan päällä vaan oikeaa kuvan hajoamista: ruudusta
+otetaan pysäytyskuvat, jotka pilkotaan ja siirretään. Siksi kaistoissa näkyy
+oikeaa sisältöä väärässä kohdassa.
+
+Purskeen kesto arvotaan 0,36–0,66 s ja blokkien paikat arvotaan joka kerta,
+joten kahta samanlaista ottoa ei tule.
 
 Glitch ei koskaan välähdä puhtaan valkoisena eikä mustana, joten se ei pala puhki
 eikä katoa. Ohjauspalkki jää glitchin ulkopuolelle, jotta operaattori näkee

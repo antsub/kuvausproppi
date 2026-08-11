@@ -217,7 +217,7 @@ VÄLILYÖNTI  seuraava cue        A  viritä hiirilaukaisu (cue 4)
 0–6         hyppää cueen        B  musta ruutu (ottojen väli)
 ←/→         vilinän nopeus      C  kursori piiloon / näkyviin
 [  ]        ruudun kirkkaus     K  kello +1 min (3:31 → 3:26)
-R           alkuun              G  glitch-purske  (⇧G = jatkuva)
+R           alkuun              G X Y Z  glitchit  (⇧ = jatkuva)
 H           piilota palkki      V  chatin autovastaus pois
                                 M  ilmoitusääni pois
                                 F  koko ruutu
