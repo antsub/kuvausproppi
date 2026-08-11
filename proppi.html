@@ -374,36 +374,67 @@ input{ -webkit-user-select:text; user-select:text; }
 #toast.on{ display:block; animation:noteIn .2s ease-out; }
 
 /* --- GLITCH -------------------------------------------------
-   Kolme kerrosta lavan päällä + koko kuvan nykäisy #wrapissa.
-   Sisältöä ei kahdenneta: kaistat käyttävät difference-sekoitusta,
-   joka kääntää alla olevan kuvan ja lukeutuu siirtyneenä juovana.
+   Oikea videoglitch siirtää itse kuvaa, ei maalaa viivoja päälle.
+   Siksi #glitch pitää sisällään kaksi KLOONIA lavasta. Kumpikin on
+   maskattu vaakakaistoiksi ja siirretty eri verran sivuun ja
+   sävytetty eri suuntaan — näin syntyy repeytynyt, kanavaeronnut
+   kuva, jossa kaistat näyttävät oikeaa mutta väärässä kohdassa
+   olevaa sisältöä. Päälle tulee vierivä juova ja kohina.
+
    Ei puhtaita valkoisia välähdyksiä — ne palaisivat kamerassa puhki.
    ------------------------------------------------------------ */
-#glitch{ position:absolute; inset:0; z-index:80; pointer-events:none; display:none; }
+#glitch{ position:absolute; left:0; top:0; width:1920px; height:1080px;
+  transform-origin:0 0; overflow:hidden; pointer-events:none; display:none; }
 #glitch.on{ display:block; }
 
-#glitch .slices{ position:absolute; inset:0; mix-blend-mode:difference;
-  background:
-    linear-gradient(#8A9099 0 0) 0 12% / 100% 3.2% no-repeat,
-    linear-gradient(#4A5058 0 0) 0 34% / 100% 1.4% no-repeat,
-    linear-gradient(#6C7885 0 0) 0 57% / 100% 5.1% no-repeat,
-    linear-gradient(#3A3F46 0 0) 0 78% / 100% 2.2% no-repeat;
-  animation:gslice .28s steps(1) infinite; }
-@keyframes gslice{
-  0%  { background-position:0 12%, 0 34%, 0 57%, 0 78%; opacity:.92 }
-  25% { background-position:0 41%, 0  8%, 0 66%, 0 23%; opacity:.55 }
-  50% { background-position:0 71%, 0 55%, 0 17%, 0 88%; opacity:1 }
-  75% { background-position:0 29%, 0 82%, 0 44%, 0 61%; opacity:.38 }
+/* Kaistat: mask paljastaa kloonista vain osan, transform siirtää sen. */
+#glitch .slice{ position:absolute; inset:0; overflow:hidden; }
+#glitch .slice > *{ transform:none !important; }
+
+#glitch .slice.a{
+  -webkit-mask-image:repeating-linear-gradient(0deg,#000 0 26px,transparent 26px 118px);
+          mask-image:repeating-linear-gradient(0deg,#000 0 26px,transparent 26px 118px);
+  filter:sepia(.55) hue-rotate(-34deg) saturate(2.1) brightness(1.04);
+  animation:gsliceA .19s steps(1) infinite; }
+@keyframes gsliceA{
+  0%  { transform:translateX(-38px); mask-position:0 0;     -webkit-mask-position:0 0 }
+  25% { transform:translateX(24px);  mask-position:0 -47px; -webkit-mask-position:0 -47px }
+  50% { transform:translateX(-62px); mask-position:0 83px;  -webkit-mask-position:0 83px }
+  75% { transform:translateX(13px);  mask-position:0 -141px;-webkit-mask-position:0 -141px }
 }
 
-#glitch .rgb{ position:absolute; inset:0; mix-blend-mode:screen; opacity:.45;
-  background:
-    linear-gradient(90deg,  rgba(196,64,47,.55), transparent 14%),
-    linear-gradient(270deg, rgba(47,168,199,.55), transparent 14%);
-  animation:grgb .17s steps(1) infinite; }
-@keyframes grgb{ 0%{ transform:translateX(-7px) } 50%{ transform:translateX(8px) } }
+#glitch .slice.b{
+  -webkit-mask-image:repeating-linear-gradient(0deg,transparent 0 58px,#000 58px 79px,transparent 79px 171px);
+          mask-image:repeating-linear-gradient(0deg,transparent 0 58px,#000 58px 79px,transparent 79px 171px);
+  filter:sepia(.5) hue-rotate(142deg) saturate(2.3);
+  animation:gsliceB .23s steps(1) infinite; }
+@keyframes gsliceB{
+  0%  { transform:translateX(46px);  mask-position:0 0;     -webkit-mask-position:0 0 }
+  33% { transform:translateX(-19px); mask-position:0 96px;  -webkit-mask-position:0 96px }
+  66% { transform:translateX(71px);  mask-position:0 -62px; -webkit-mask-position:0 -62px }
+}
 
-#glitch .noise{ position:absolute; inset:0; opacity:.14;
+/* Lohkokorruptio: muutama suorakaide, jossa kuva on tyystin poissa. */
+#glitch .blocks{ position:absolute; inset:0;
+  background:
+    linear-gradient(#0E1116 0 0) 0    0    / 380px 34px no-repeat,
+    linear-gradient(#151A21 0 0) 0    0    / 210px 22px no-repeat,
+    linear-gradient(#0B0E12 0 0) 0    0    / 640px 18px no-repeat;
+  animation:gblocks .21s steps(1) infinite; }
+@keyframes gblocks{
+  0%  { background-position:  240px 180px,  1180px 640px,  700px 880px }
+  33% { background-position:  980px 420px,   300px 210px, 1300px 300px }
+  66% { background-position:  120px 760px,   860px 940px,  420px 520px; opacity:.6 }
+}
+
+/* Vierivä juova — analogisen kuvan pystysuora ryömintä. */
+#glitch .roll{ position:absolute; left:0; right:0; height:150px;
+  background:linear-gradient(180deg, transparent,
+    rgba(200,214,228,.15) 42%, rgba(200,214,228,.07) 62%, transparent);
+  animation:groll 1.15s linear infinite; }
+@keyframes groll{ from{ top:-170px } to{ top:1080px } }
+
+#glitch .noise{ position:absolute; inset:0; opacity:.13;
   background-image:
     repeating-linear-gradient(0deg,  rgba(200,208,216,.5) 0 1px, transparent 1px 3px),
     repeating-linear-gradient(90deg, rgba(0,0,0,.5) 0 1px, transparent 1px 2px);
@@ -414,16 +445,16 @@ input{ -webkit-user-select:text; user-select:text; }
   66% { background-position:-2px 1px, 2px 3px }
 }
 
-/* Koko kuvan nykäisy. Tämä on #wrapissa eikä #stagessa, koska
-   #stagen transformin kirjoittaa fit() eikä animaatio saa syödä sitä. */
+/* Koko kuvan nykäisy ja pystyhyppy. Tämä on #wrapissa eikä #stagessa,
+   koska #stagen transformin kirjoittaa fit() eikä animaatio saa syödä sitä. */
 #wrap.glitch{ animation:gwrap .22s steps(1) infinite; }
 @keyframes gwrap{
-  0%  { transform:none;                 filter:none }
-  20% { transform:translate(-7px,1px);  filter:hue-rotate(12deg) saturate(1.25) }
-  40% { transform:translate(5px,-2px);  filter:none }
-  55% { transform:translateY(0) scaleY(1.012); filter:invert(.14) }
-  75% { transform:translate(9px,0);     filter:contrast(1.5) }
-  90% { transform:translate(-3px,2px);  filter:none }
+  0%  { transform:none;                  filter:none }
+  18% { transform:translate(-7px,1px);   filter:hue-rotate(10deg) saturate(1.2) }
+  36% { transform:translate(4px,-13px);  filter:none }
+  52% { transform:translateY(0) scaleY(1.014); filter:invert(.12) }
+  70% { transform:translate(9px,7px);    filter:contrast(1.45) }
+  88% { transform:translate(-3px,-2px);  filter:none }
 }
 
 /* --- musta ruutu / operaattorin HUD ------------------------- */
@@ -931,9 +962,19 @@ input{ -webkit-user-select:text; user-select:text; }
   <div id="notes"></div>
   <div id="toast"></div>
 
-  <div id="glitch"><div class="slices"></div><div class="rgb"></div><div class="noise"></div></div>
+</div>
 
-</div></div>
+<!-- Glitch on lavan SISARUS, ei sen lapsi: se sisältää kloonit lavasta,
+     joten se ei saa jäädä kloonattavan alueen sisään. -->
+<div id="glitch">
+  <div class="slice a"></div>
+  <div class="slice b"></div>
+  <div class="blocks"></div>
+  <div class="roll"></div>
+  <div class="noise"></div>
+</div>
+
+</div>
 
 <div id="black"></div>
 
@@ -969,7 +1010,10 @@ function fit(){
   const s = Math.min(innerWidth/1920, innerHeight/1080);
   const x = Math.round((innerWidth  - 1920*s) / 2);
   const y = Math.round((innerHeight - 1080*s) / 2);
-  stage.style.transform = 'translate('+x+'px,'+y+'px) scale('+s+')';
+  const t = 'translate('+x+'px,'+y+'px) scale('+s+')';
+  stage.style.transform = t;
+  const g = document.getElementById('glitch');   // glitch asettuu lavan päälle
+  if(g) g.style.transform = t;
 }
 addEventListener('resize', fit); fit();
 
@@ -1115,13 +1159,29 @@ function rahina(kesto){                 // glitchin kohina
    GLITCH — G purskeena, ⇧G jatkuvana
    ============================================================ */
 let glitchTimer = null, glitchJatkuva = false;
+
+/* Kloonataan lava kahdesti. Kloonit ovat pysäytyskuvia, jotka maski
+   pilkkoo kaistoiksi ja animaatio siirtää sivuun. Id:t riisutaan,
+   ettei getElementById osu vahingossa klooniin. */
+function teeKloonit(){
+  document.querySelectorAll('#glitch .slice').forEach(s=>{
+    s.textContent = '';
+    const k = stage.cloneNode(true);
+    k.removeAttribute('id');
+    k.querySelectorAll('[id]').forEach(e=> e.removeAttribute('id'));
+    k.style.transform = 'none';
+    s.appendChild(k);
+  });
+}
 function glitchPaalle(){
+  teeKloonit();
   document.getElementById('glitch').classList.add('on');
   document.getElementById('wrap').classList.add('glitch');
 }
 function glitchPois(){
   document.getElementById('glitch').classList.remove('on');
   document.getElementById('wrap').classList.remove('glitch');
+  document.querySelectorAll('#glitch .slice').forEach(s=> s.textContent = '');
 }
 function glitchPurske(){
   if(glitchJatkuva) return;

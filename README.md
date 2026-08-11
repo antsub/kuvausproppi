@@ -73,11 +73,16 @@ hiirtä, ruutu vastaa. Operaattorin ei tarvitse osua painallusta millisekunnille
 omaa säätöä — monitorin himmennys on useimmiten PWM-pulssitusta, joka lyö kameran
 sulkijaa vastaan ja tuottaa vilkkuvan palkin. **Monitorin oma kirkkaus 100 %.**
 
-**`G`** laukaisee glitch-purskeen: koko kuva nykäisee, vaakakaistat kääntävät
-alla olevan kuvan nurin, reunoihin tulee puna-syaani sävyreuna ja kaiuttimesta
-kuuluu lyhyt rahina. Kesto vaihtelee 0,36–0,66 s satunnaisesti, joten peräkkäiset
-otot eivät näytä kloonatuilta. **`⇧G`** jättää glitchin päälle, kunnes painat
-uudestaan — käytä sitä, jos kohtaus tarvitsee pitkän hajoamisen.
+**`G`** laukaisee glitch-purskeen. Se ei ole viivoja kuvan päällä vaan oikeaa
+kuvan repeämistä: ruudusta otetaan kaksi pysäytyskuvaa, ne pilkotaan
+vaakakaistoiksi ja siirretään eri verran sivuun ja eri suuntiin sävytettyinä.
+Lopputuloksena kaistoissa näkyy oikeaa sisältöä väärässä kohdassa — konsolirivit
+ja paneelit repeytyvät irti paikaltaan. Päälle tulee lohkokorruptiota, vierivä
+juova, kohina ja lyhyt rahina kaiuttimesta.
+
+Kesto vaihtelee 0,36–0,66 s satunnaisesti, joten peräkkäiset otot eivät näytä
+kloonatuilta. **`⇧G`** jättää glitchin päälle, kunnes painat uudestaan — käytä
+sitä, jos kohtaus tarvitsee pitkän hajoamisen.
 
 Glitch ei koskaan välähdä puhtaan valkoisena eikä mustana, joten se ei pala puhki
 eikä katoa. Ohjauspalkki jää glitchin ulkopuolelle, jotta operaattori näkee
