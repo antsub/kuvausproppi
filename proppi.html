@@ -318,7 +318,12 @@ input{ -webkit-user-select:text; user-select:text; }
   background:var(--panel); transition:flex-basis .12s; }
 #bl-detail.on{ width:520px; flex:0 0 520px; }
 
-.bigtimer{ font-size:108px; letter-spacing:.02em; color:var(--tickr); margin:50px 0 8px; }
+.worklabel{ font-size:15px; letter-spacing:.44em; color:var(--text); margin-top:34px;
+  font-weight:600; }
+.bigtimer{ font-size:104px; letter-spacing:.02em; color:var(--tickr); margin:10px 0 0;
+  line-height:1.06; }
+.workunits{ display:flex; justify-content:center; gap:118px; font-size:13px;
+  letter-spacing:.24em; color:var(--dim); margin:2px 0 20px; }
 .startbtn{ display:inline-flex; align-items:center; gap:9px; margin-top:26px; padding:9px 26px;
   border-radius:5px; background:var(--urgent); color:#fff; font-size:13px; letter-spacing:.06em; }
 .startbtn.stopped{ background:var(--ok); color:#0B0E12; }
@@ -374,9 +379,9 @@ input{ -webkit-user-select:text; user-select:text; }
 #black.on{ display:block; }
 #hud{
   position:fixed; left:0; right:0; top:0; z-index:200; pointer-events:none;
-  background:rgba(0,0,0,.92); border-bottom:1px solid #2A2F36; padding:5px 12px;
-  font-family:var(--mono); font-size:11.5px; line-height:1.5; color:#77828E;
-  display:flex; gap:11px; flex-wrap:wrap; align-items:center; white-space:nowrap;
+  background:rgba(0,0,0,.92); border-bottom:1px solid #2A2F36; padding:5px 10px;
+  font-family:var(--mono); font-size:11px; line-height:1.5; color:#77828E;
+  display:flex; gap:9px; flex-wrap:wrap; align-items:center; white-space:nowrap;
 }
 #hud.off{ display:none; }
 #hud b{ color:#fff; font-weight:600; }
@@ -814,19 +819,21 @@ input{ -webkit-user-select:text; user-select:text; }
       </div>
       <div class="body">
         <div style="flex:1;padding:26px 34px;text-align:center;overflow:hidden">
+          <div class="worklabel">WORKING TIME</div>
+          <div class="bigtimer mono" id="tickrTime">13:12:33</div>
+          <div class="workunits"><span>HOURS</span><span>MINUTES</span><span>SECONDS</span></div>
           <div style="font-size:12px;letter-spacing:.18em;color:var(--dim)" id="tickrState">
             RUNNING — GRIME-4 / waste_room_01 / ENV ART</div>
-          <div class="bigtimer mono" id="tickrTime">11:47:33</div>
-          <div style="font-size:13.5px;color:var(--dim)">TÄMÄ VIIKKO
+          <div style="font-size:13.5px;color:var(--dim);margin-top:12px">TÄMÄ VIIKKO
             <span class="mono" style="color:var(--text)">71 h 12 min</span>
             &nbsp;·&nbsp; YLITYÖ <span class="mono" style="color:var(--urgent)">+31 h 12 min</span></div>
           <div class="startbtn" id="tickrBtn">■ &nbsp;PYSÄYTÄ</div>
-          <div style="margin-top:34px;max-width:940px;margin-inline:auto;text-align:left">
+          <div style="margin-top:30px;max-width:940px;margin-inline:auto;text-align:left">
             <div class="mail"><div class="from">ma</div><div class="subj">waste_room_01 — blockout</div><div class="t">13 h 04</div></div>
             <div class="mail"><div class="from">ti</div><div class="subj">waste_room_01 — highpoly / bake</div><div class="t">14 h 51</div></div>
             <div class="mail"><div class="from">ke</div><div class="subj">bugfix / build 4470</div><div class="t">15 h 22</div></div>
-            <div class="mail"><div class="from">to</div><div class="subj">waste_room_01 — lighting pass</div><div class="t">15 h 48</div></div>
-            <div class="mail"><div class="from">pe</div><div class="subj">waste_room_01 — grime materials</div><div class="t">11 h 47</div></div>
+            <div class="mail"><div class="from">to</div><div class="subj">waste_room_01 — lighting pass</div><div class="t">14 h 43</div></div>
+            <div class="mail un"><div class="from">pe</div><div class="subj">waste_room_01 — grime materials</div><div class="t">13 h 12</div></div>
           </div>
         </div>
       </div>
@@ -882,16 +889,16 @@ input{ -webkit-user-select:text; user-select:text; }
   <span class="keys">␣ seur.</span>
   <span class="keys">0–6 hyppy</span>
   <span class="keys">←→ vilinä <b id="hudSpeed">1.0×</b></span>
-  <span class="keys">[ ] kirkkaus <b id="hudBri">100 %</b></span>
+  <span class="keys">[] kirkkaus <b id="hudBri">100 %</b></span>
   <span class="sep keys">|</span>
   <span class="keys">A hiiri</span>
   <span class="keys">B musta</span>
   <span class="keys">C kursori <b id="hudCur">NÄKYY</b></span>
-  <span class="keys">K kello <b id="hudKello">3:31 kiinteä</b></span>
-  <span class="keys">V autovastaus <b id="hudReply">ON</b></span>
+  <span class="keys">K kello <b id="hudKello">3:28</b></span>
+  <span class="keys">V vastaus <b id="hudReply">ON</b></span>
   <span class="keys">M ääni <b id="hudSound">ON</b></span>
   <span class="keys">R alku</span>
-  <span class="keys">F koko ruutu</span>
+  <span class="keys">F ruutu</span>
   <span class="sep keys">|</span>
   <span class="keys"><b>H piilota</b></span>
 </div>
@@ -952,7 +959,7 @@ function hideAll(){ show(null); }
       (a.id==='klatter'||a.id==='backloggr' ? '<em data-count="'+a.id+'"></em>' : '')+
     '</div>').join('') +
     '<div id="tray"><span class="mono">⬤ 41 GB</span><span class="mono">GPU 71 %</span>'+
-    '<span id="clock" class="mono">3:31</span></div>';
+    '<span id="clock" class="mono">3:28</span></div>';
   tb.addEventListener('click', e=>{
     const ic = e.target.closest('.tbicon');
     if(ic){ stopFlurry(); show(ic.dataset.app); }
@@ -1033,38 +1040,58 @@ function blip(){                        // hiljaisempi: oma viesti lähti
 }
 
 /* ============================================================
-   KELLO — JÄÄDYTETTY
-   Kello ei saa kulkea: elokuvassa sen pitää lukea sama lukema
-   joka otossa, tai jatkuvuus rikkoutuu leikkauksessa. Tunnit ja
-   minuutit eivät liiku koskaan itsestään — vain operaattorin
-   näppäimestä. Sekunnit elävät ainoastaan Tickrin ajastimessa.
+   KELLO
+   Lähtee 3:28 ja käy normaalisti eteenpäin. Kun se saavuttaa
+   3:31, se PYSÄHTYY siihen — minuutit eivät liiku enää, jotta
+   lukema on sama joka otossa ja jatkuvuus kestää leikkauksen.
+
+   K  vie minuutin eteenpäin (enintään 3:31)
+   K  kun kello on 3:31 → palautus 3:26:een uutta ottoa varten
    ============================================================ */
-let kelloAlku = {h:3, m:31};            // oletus: 3:31 kaikissa cueissa
-let kello     = {h:3, m:31};
+const KELLO_ALKU  = 3*60 + 28;
+const KELLO_LOPPU = 3*60 + 31;
+const KELLO_PALUU = 3*60 + 26;
 
-function setClock(h,m,pulse){
-  if(h!=null) kello = {h:h, m:m};
+let kelloMin = KELLO_ALKU, kelloPohja = KELLO_ALKU, kelloHetki = Date.now();
+
+function kelloOsat(min){ return {h:((Math.floor(min/60)-1)%12)+1, m:min%60}; }
+function drawClock(){
+  const o = kelloOsat(kelloMin);
+  const teksti = o.h + ':' + String(o.m).padStart(2,'0');
+  document.getElementById('clock').textContent = teksti;
+  const hk = document.getElementById('hudKello');
+  if(hk) hk.textContent = teksti + (kelloMin >= KELLO_LOPPU ? ' — pysähtynyt' : '');
+}
+function asetaKello(min, pulssi){
+  const uusi = Math.min(min, KELLO_LOPPU);
+  const saavuttiLopun = uusi !== kelloMin && uusi === KELLO_LOPPU;
+  kelloMin = uusi; kelloPohja = uusi; kelloHetki = Date.now();
   drawClock();
-  if(pulse){ const c=document.getElementById('clock');
-    c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse'); }
+  if(pulssi || saavuttiLopun){
+    const c = document.getElementById('clock');
+    c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse');
+  }
 }
-function kelloTeksti(){ return kello.h + ':' + String(kello.m).padStart(2,'0'); }
-function drawClock(){ document.getElementById('clock').textContent = kelloTeksti(); }
-function aikaleima(){                   // 03:31 — viestien kellonaika
-  return String(kello.h).padStart(2,'0')+':'+String(kello.m).padStart(2,'0');
+/* Lasketaan kellonaika Date.now():sta eikä tikkejä laskemalla, jotta
+   taustavälilehden ajastinkuristus ei hidasta kelloa. */
+setInterval(()=>{
+  if(kelloMin >= KELLO_LOPPU) return;              // 3:31 → pysähtyy
+  const m = kelloPohja + Math.floor((Date.now()-kelloHetki)/60000);
+  if(m !== kelloMin) asetaKello(m);
+}, 1000);
+
+function kelloNappi(){
+  if(kelloMin >= KELLO_LOPPU) asetaKello(KELLO_PALUU);   // 3:31 → 3:26
+  else asetaKello(kelloMin + 1);                          // muuten +1 min
 }
-/* K vaihtaa lähtökellon. 2:58 palauttaa käsikirjoituksen beatin,
-   jossa kello vaihtuu 3:31:een cuessa 5. */
-function vaihdaKello(){
-  kelloAlku = (kelloAlku.m === 31) ? {h:2, m:58} : {h:3, m:31};
-  setClock(kelloAlku.h, kelloAlku.m);
-  document.getElementById('hudKello').textContent =
-    kelloAlku.m === 31 ? '3:31 kiinteä' : '2:58 → 3:31';
+function aikaleima(){                   // 03:29 — viestien kellonaika
+  const o = kelloOsat(kelloMin);
+  return String(o.h).padStart(2,'0')+':'+String(o.m).padStart(2,'0');
 }
 
-/* Tickr — tunnit ja minuutit jäädytetty, vain sekunnit elävät.
-   Sekunnit kiertävät 00–59 nostamatta minuuttia. */
-const TICKR_H = 11, TICKR_M = 47;
+/* Tickr — työaika 13 h 12 min. Tunnit ja minuutit jäädytetty, vain
+   sekunnit elävät ja kiertävät 00–59 nostamatta minuuttia. */
+const TICKR_H = 13, TICKR_M = 12;
 let tsek = 33, tickrRun = true;
 function piirraTickr(){
   document.getElementById('tickrTime').textContent =
@@ -1651,7 +1678,7 @@ function goto(n){
   /* Jokainen cue on itsenäinen tila: saman numeron painaminen
      uudestaan tuottaa saman kuvan eikä kasaa ilmoituksia. */
   if(n===0){ stopFlurry(); clearNotes(); hideAll(); fillTickets(3);
-             setClock(kelloAlku.h, kelloAlku.m); nollaaTickr();
+             asetaKello(KELLO_ALKU); nollaaTickr();
              setPlay(false); naytaDock('console'); }
 
   if(n===1){ clearNotes(); startFlurry(); }
@@ -1664,9 +1691,9 @@ function goto(n){
   if(n===4){ stopFlurry(); clearNotes(); show('engine');
     note('13 NEW URGENT REQUESTS', null, true); }
 
-  /* Kello korostuu ilmoitus 2:n ollessa vielä ruudulla — ei tyhjennystä.
-     Jos lähtökello on 2:58, tässä tapahtuu myös vaihtuminen 3:31:een. */
-  if(n===5){ setClock(3,31,true); }
+  /* Kello 3:31 ilmoitus 2:n ollessa vielä ruudulla — ei tyhjennystä.
+     Pakottaa lopputilan, jos operaattori ei halua odottaa kellon kulkua. */
+  if(n===5){ asetaKello(KELLO_LOPPU, true); }
 
   if(n===6){ stopFlurry(); clearNotes(); show('backloggr'); fillTickets(31);
     note('31 URGENT REQUESTS', null, true); }
@@ -1696,7 +1723,7 @@ addEventListener('keydown', e=>{
     document.getElementById('hudCur').textContent = off ? 'POIS' : 'NÄKYY'; }
   else if(k==='v'){ autoVastaus = !autoVastaus;
     document.getElementById('hudReply').textContent = autoVastaus ? 'ON' : 'POIS'; }
-  else if(k==='k'){ vaihdaKello(); }
+  else if(k==='k'){ kelloNappi(); }
   else if(k==='b'){ document.getElementById('black').classList.toggle('on'); }
   else if(k==='r'){ goto(0); }
   else if(k==='h'){ document.getElementById('hud').classList.toggle('off'); }

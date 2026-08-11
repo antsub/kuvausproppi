@@ -26,24 +26,32 @@ Sama näppäin tuo sen takaisin.
 
 | Cue | Mitä ruudulla tapahtuu |
 |:---:|---|
-| **0** | Työpöytä, kello 2:58 |
+| **0** | Työpöytä, kello 3:28 |
 | **1** | Sovellusvilinä — 8 ohjelmaa vaihtuu kiihtyen 1,1 s → 0,34 s |
 | **2** | Klatter + ilmoitus "3 NEW URGENT REQUESTS" |
 | **3** | Vessel Engine, jätehuone auki |
 | **4** | Ilmoitus "13 NEW URGENT REQUESTS" |
-| **5** | Kello korostuu — **3:31** |
+| **5** | Kello **3:31** (välähtää) |
 | **6** | Backloggr, lista kasvaa 3 → 31, "31 URGENT REQUESTS" |
 
-### Kello on jäädytetty
+### Kello
 
-Kello lukee **3:31 koko ajan** eikä kulje itsestään. Tämä on tarkoituksellista:
-kellon pitää näyttää sama lukema joka otossa, tai jatkuvuus rikkoutuu
-leikkauksessa. Sama koskee Tickrin ajastinta — tunnit ja minuutit ovat kiinni
-lukemassa 11:47, vain sekunnit elävät.
+Kello **lähtee 3:28** ja käy normaalisti eteenpäin. Kun se saavuttaa **3:31, se
+pysähtyy siihen** eikä liiku enää — silloin lukema on sama joka otossa eikä
+jatkuvuus rikkoudu leikkauksessa.
 
-Jos ohjaaja haluaa kuvata sen, että **kello vaihtuu** 3:31:een, paina **`K`**.
-Silloin cuet 0–4 näyttävät 2:58 ja cue 5 kääntää sen 3:31:een. `K` uudestaan
-palauttaa kiinteän 3:31:n. Voimassa oleva tila näkyy ohjauspalkissa.
+**`K` vie kelloa minuutin eteenpäin**, jos et halua odottaa oikeaa aikaa:
+
+```
+3:28 → 3:29 → 3:30 → 3:31 → (K) → 3:26 → 3:27 → …
+```
+
+Kun kello on 3:31, **`K` palauttaa sen 3:26:een** uutta ottoa varten. Cue 5
+pakottaa 3:31:n suoraan. Kello välähtää aina kun se saavuttaa 3:31, joten kamera
+ehtii siihen. Voimassa oleva lukema näkyy ohjauspalkissa.
+
+Tickrin työaikanäyttö on jäädytetty lukemaan **13 h 12 min** — vain sekunnit
+kiertävät 00–59, tunnit ja minuutit eivät liiku.
 
 ### 4. Näppäimet
 
@@ -51,7 +59,7 @@ palauttaa kiinteän 3:31:n. Voimassa oleva tila näkyy ohjauspalkissa.
 VÄLILYÖNTI  seuraava cue        A  viritä hiirilaukaisu (cue 4)
 0–6         hyppää cueen        B  musta ruutu (ottojen väli)
 ←  →        vilinän nopeus      C  kursori piiloon / näkyviin
-[  ]        ruudun kirkkaus     K  kello: 3:31 kiinteä / 2:58 → 3:31
+[  ]        ruudun kirkkaus     K  kello +1 min (3:31 → 3:26)
 R           alkuun              V  chatin autovastaus pois
 H           piilota palkki      M  ilmoitusääni pois
                                 F  koko ruutu

@@ -178,12 +178,12 @@ tuotetta.
 
 | Cue | Näkyvä | Tapahtuma |
 |---|---|---|
-| 0 | `desktop.png` | Perustila, kello 2:58 |
+| 0 | `desktop.png` | Perustila, kello 3:28 |
 | 1 | kaikki 8 sovellusta | **Vilinä** — 1,1 s → 0,34 s, kiihtyen |
 | 2 | Klatter | Ilmoitus: "3 NEW URGENT REQUESTS" |
 | 3 | Vessel Engine + jätehuone | Mike työstää kohtausta |
 | 4 | sama | Mike herää mikrounesta → "13 NEW URGENT REQUESTS" |
-| 5 | sama | Kello korostuu — **3:31** |
+| 5 | sama | Kello **3:31** (välähtää) |
 | 6 | Backloggr | "31 URGENT REQUESTS", lista kasvaa 3 → 31 |
 
 ## Liite B: Mitä näyttelijä voi tehdä ruudulla
@@ -216,15 +216,16 @@ Ohjauspalkki on ruudun yläreunassa. **Piilota se `H`:lla ennen ottoa.**
 VÄLILYÖNTI  seuraava cue        A  viritä hiirilaukaisu (cue 4)
 0–6         hyppää cueen        B  musta ruutu (ottojen väli)
 ←/→         vilinän nopeus      C  kursori piiloon / näkyviin
-[  ]        ruudun kirkkaus     K  kello: 3:31 kiinteä / 2:58 → 3:31
+[  ]        ruudun kirkkaus     K  kello +1 min (3:31 → 3:26)
 R           alkuun              V  chatin autovastaus pois
 H           piilota palkki      M  ilmoitusääni pois
                                 F  koko ruutu
 ```
 
-**Kello on jäädytetty lukemaan 3:31** eikä kulje itsestään — se on jatkuvuuden
-takia pakollista. Tickrin ajastimessa vain sekunnit elävät, tunnit ja minuutit
-ovat kiinni.
+**Kello lähtee 3:28 ja pysähtyy 3:31:een**, jonka jälkeen se ei liiku — se on
+jatkuvuuden takia pakollista. `K` vie minuutin eteenpäin, ja 3:31:ssä se
+palauttaa kellon 3:26:een. Tickrin työaika on kiinni lukemassa 13 h 12 min,
+vain sekunnit kiertävät.
 
 **Kun näyttelijä kirjoittaa chattiin, operaattorin näppäimet ovat pois käytöstä**
 — muuten "b" mustaisi ruudun kesken repliikin. Ohjauspalkkiin syttyy tällöin
