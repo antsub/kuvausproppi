@@ -217,6 +217,16 @@ input{ -webkit-user-select:text; user-select:text; }
 #chisel .shade-solid .wire{ opacity:.22 }
 #chisel .shade-wire .solidfill{ opacity:.06 }
 .solidfill{ position:absolute; inset:0; }
+/* LiDAR-skannaus. Kun WebGL käynnistyy, .fallback piilotetaan ja
+   canvas ottaa näkymän haltuun. */
+#scanCanvas{ position:absolute; inset:0; width:100%; height:100%; display:none;
+  cursor:grab; }
+#scanCanvas.on{ display:block; }
+#scanCanvas.drag{ cursor:grabbing; }
+#chisel.gl .fallback{ display:none; }
+#scanTip{ position:absolute; left:16px; bottom:14px; font-family:var(--mono);
+  font-size:11.5px; color:var(--dim2); text-shadow:0 1px 2px #000; display:none; }
+#chisel.gl #scanTip{ display:block; }
 #chisel .npanel{ position:absolute; right:12px; top:12px; width:214px; background:rgba(18,22,27,.94);
   border:1px solid var(--line2); border-radius:5px; padding:9px 0; }
 
@@ -678,8 +688,8 @@ input{ -webkit-user-select:text; user-select:text; }
       <div class="titlebar">
         <span class="dot" style="background:var(--chisel)"></span>
         <span class="nm">CHISEL 4.2</span>
-        <span>SM_bin_rusted_02.blend — [Edit Mode]</span>
-        <span class="right"><span class="mono" style="color:var(--dim2)">Verts 12 448 · Faces 11 203 · Tris 22 406 · Objects 1/34</span></span>
+        <span>waste_room_01_scan.glb — [Object Mode]</span>
+        <span class="right"><span class="mono" style="color:var(--dim2)">LiDAR-referenssi · 19.6. · ei siivottu</span></span>
       </div>
       <div class="menubar">
         <b>File</b><b>Edit</b><b>Mesh</b><b>Vertex</b><b>Edge</b><b>Face</b><b>UV</b><b>Modifier</b>
@@ -713,16 +723,18 @@ input{ -webkit-user-select:text; user-select:text; }
             <div class="row"><span class="ic">▧</span>Weighted Normal</div>
           </div>
         </div>
-        <div id="chisel-view" class="shade-solid" style="flex:1;position:relative;min-width:0;display:flex;flex-direction:column">
+        <div id="chisel-view" class="shade-mat" style="flex:1;position:relative;min-width:0;display:flex;flex-direction:column">
           <div class="viewport" style="flex:1;height:auto">
-            <div class="solidfill">
+            <canvas id="scanCanvas"></canvas>
+            <div id="scanTip">SCAN_waste_room_01 · raahaa hiirellä · rulla zoomaa</div>
+            <div class="fallback solidfill">
               <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">
                 <polygon points="380,150 620,150 660,470 340,470" fill="#3A3F46"/>
                 <polygon points="380,150 620,150 600,120 400,120" fill="#4A5058"/>
                 <polygon points="620,150 660,470 690,440 650,130" fill="#2C3138"/>
               </svg>
             </div>
-            <div class="wire">
+            <div class="fallback wire">
               <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet">
                 <g stroke="#8FA6BE" fill="none" stroke-width="1">
                   <polygon points="380,150 620,150 660,470 340,470"/>
@@ -762,18 +774,21 @@ input{ -webkit-user-select:text; user-select:text; }
           <div class="ph">OUTLINER</div>
           <div class="pc">
             <div class="row"><span class="ic">▾</span>waste_room_01</div>
+            <div class="row on" style="padding-left:32px"><span class="ic">▣</span>SCAN_waste_room_01</div>
             <div class="row" style="padding-left:32px"><span class="ic">▾</span>props_debris</div>
-            <div class="row on" style="padding-left:52px"><span class="ic">△</span>SM_bin_rusted_02</div>
+            <div class="row" style="padding-left:52px"><span class="ic">△</span>SM_bin_rusted_02</div>
             <div class="row" style="padding-left:52px"><span class="ic">△</span>SM_bin_rusted_01</div>
             <div class="row" style="padding-left:52px"><span class="ic">△</span>SM_bag_pile_03</div>
             <div class="row" style="padding-left:32px"><span class="ic">▸</span>geo_walls</div>
             <div class="row" style="padding-left:32px"><span class="ic">▸</span>lighting</div>
-            <div class="ph" style="margin-top:10px">ITEM · SM_bin_rusted_02</div>
-            <div class="prop"><b>Vertices</b><span class="v">12 448</span></div>
-            <div class="prop"><b>Triangles</b><span class="v">22 406</span></div>
-            <div class="prop"><b>UV maps</b><span class="v">UV0, UV1</span></div>
-            <div class="prop"><b>Material</b><span class="v">M_grime_04</span></div>
-            <div class="prop"><b>LOD</b><span class="v">0 / 3</span></div>
+            <div class="ph" style="margin-top:10px">ITEM · SCAN_waste_room_01</div>
+            <div class="prop"><b>Lähde</b><span class="v">LiDAR 19.6.</span></div>
+            <div class="prop"><b>Vertices</b><span class="v" id="chVerts">9 903</span></div>
+            <div class="prop"><b>Triangles</b><span class="v" id="chTris">17 104</span></div>
+            <div class="prop"><b>Normals</b><span class="v" style="color:var(--warn)">puuttuvat</span></div>
+            <div class="prop"><b>UV maps</b><span class="v">UV0</span></div>
+            <div class="prop"><b>Texture</b><span class="v">2048² · 2 settiä</span></div>
+            <div class="prop"><b>Mitat</b><span class="v">3,7 × 2,6 × 4,3 m</span></div>
           </div>
         </div>
       </div>
@@ -1066,7 +1081,7 @@ input{ -webkit-user-select:text; user-select:text; }
   <span class="kirj"><b>NÄYTTELIJÄ KIRJOITTAA</b> — Esc palauttaa näppäimet</span>
   <span class="keys">␣ seur.</span>
   <span class="keys">0–6</span>
-  <span class="keys">←→ vilinä <b id="hudSpeed">1.0×</b></span>
+  <span class="keys">←→ softa <b id="hudSofta">työpöytä</b></span>
   <span class="keys">[] kirkkaus <b id="hudBri">100 %</b></span>
   <span class="sep keys">|</span>
   <span class="keys">A hiiri</span>
@@ -1081,6 +1096,10 @@ input{ -webkit-user-select:text; user-select:text; }
   <span class="sep keys">|</span>
   <span class="keys"><b>H piilota</b></span>
 </div>
+
+<!-- LiDAR-skannaus base64:na. Script-tagi latautuu myös file://-tilassa,
+     toisin kuin fetch(), joten proppi toimii ilman palvelinta. -->
+<script src="assets/skanni.js"></script>
 
 <script>
 /* ============================================================
@@ -1121,14 +1140,28 @@ const SOVELLUKSET = [
   {id:'tickr',     kirjain:'T', vari:'--tickr',     nimi:'Tickr'},
   {id:'backloggr', kirjain:'B', vari:'--backloggr', nimi:'Backloggr'}
 ];
-const APPS   = SOVELLUKSET.map(a=>a.id);
-const FLURRY = ['engine','chisel','klatter','patina','backloggr','depot','posthaus','tickr'];
+const APPS = SOVELLUKSET.map(a=>a.id);
+/* Selausjärjestys ←/→-näppäimille. Automaattista ajastettua vaihtoa ei ole:
+   rytmin tekee operaattori käsin, jotta se osuu näyttelijän tekemiseen. */
+const JARJESTYS = ['engine','chisel','klatter','patina','backloggr','depot','posthaus','tickr'];
+let selausIdx = 0;
 
 function show(app){
   APPS.forEach(a=> document.getElementById(a).classList.toggle('on', a===app));
   document.querySelectorAll('.tbicon').forEach(i=> i.classList.toggle('act', i.dataset.app===app));
+  const i = JARJESTYS.indexOf(app);
+  if(i >= 0) selausIdx = i;
+  /* pakota 3D-näkymä piirtymään heti, ei odoteta seuraavaa kehystä */
+  if(app === 'chisel' && window.Skanni) window.Skanni.kehys(0);
+  const hs = document.getElementById('hudSofta');
+  if(hs) hs.textContent = app ? (SOVELLUKSET.find(s=>s.id===app)||{}).nimi : 'työpöytä';
 }
 function hideAll(){ show(null); }
+/* ←/→ selaa softia käsin. Tämä korvaa aiemman ajastetun vilinän. */
+function selaa(suunta){
+  selausIdx = (selausIdx + suunta + JARJESTYS.length) % JARJESTYS.length;
+  show(JARJESTYS[selausIdx]);
+}
 
 /* tehtäväpalkki */
 (function(){
@@ -1144,26 +1177,9 @@ function hideAll(){ show(null); }
     '<span id="clock" class="mono">3:28</span></div>';
   tb.addEventListener('click', e=>{
     const ic = e.target.closest('.tbicon');
-    if(ic){ stopFlurry(); show(ic.dataset.app); }
+    if(ic){ show(ic.dataset.app); }
   });
 })();
-
-/* ============================================================
-   VILINÄ
-   ============================================================ */
-let flurryTimer=null, flurryIdx=0, flurrySpeed=1.0;
-function startFlurry(){
-  stopFlurry();
-  let step = 0;
-  const tick = ()=>{
-    show(FLURRY[flurryIdx % FLURRY.length]);
-    flurryIdx++; step++;
-    const base = Math.max(340, 1100 - step*52);   // kiihtyy 1,1 s → 0,34 s
-    flurryTimer = setTimeout(tick, base / flurrySpeed);
-  };
-  tick();
-}
-function stopFlurry(){ if(flurryTimer){ clearTimeout(flurryTimer); flurryTimer=null; } }
 
 /* ============================================================
    ILMOITUKSET
@@ -1253,12 +1269,25 @@ let glitchTimer = null, glitchJatkuva = false, glitchTyyppi = 'tear';
    pilkkoo kaistoiksi ja animaatio siirtää sivuun. Id:t riisutaan,
    ettei getElementById osu vahingossa klooniin. */
 function teeKloonit(){
+  /* cloneNode ei kopioi canvasin pikseleitä, joten 3D-näkymä jäisi klooniin
+     mustaksi. Otetaan siitä kuva ja pannaan tilalle. */
+  let canvasKuva = null;
+  const cv = document.getElementById('scanCanvas');
+  if(cv && cv.classList.contains('on') && cv.width){
+    try{ canvasKuva = cv.toDataURL('image/jpeg', 0.6); }catch(e){}
+  }
   document.querySelectorAll('#glitch .slice').forEach(s=>{
     s.textContent = '';
     const k = stage.cloneNode(true);
     k.removeAttribute('id');
     k.querySelectorAll('[id]').forEach(e=> e.removeAttribute('id'));
     k.style.transform = 'none';
+    if(canvasKuva) k.querySelectorAll('canvas').forEach(c=>{
+      const img = document.createElement('img');
+      img.src = canvasKuva; img.style.cssText = c.style.cssText;
+      img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover';
+      c.parentNode.replaceChild(img, c);
+    });
     s.appendChild(k);
   });
 }
@@ -1848,6 +1877,263 @@ document.querySelectorAll('#chisel .tool[data-cs]').forEach(t=> t.onclick = ()=>
 });
 
 /* ============================================================
+   LIDAR-SKANNAUS — oma glTF-lataaja ja WebGL-piirto
+   Kirjastoa ei käytetä: proppi on yksi itsenäinen tiedosto.
+   Skannauksessa ei ole normaaleja, joten ne lasketaan tässä.
+   ============================================================ */
+const Skanni = window.Skanni = (function(){
+  const cv = document.getElementById('scanCanvas');
+  let gl=null, ohjelma=null, osat=[], keskus=[0,0,0], sade=3;
+  let yaw=0.75, pitch=-0.30, etaisyys=8, raahaa=false, hx=0, hy=0, autoAika=0;
+
+  /* --- matriisit (sarakejärjestys, kuten WebGL odottaa) --- */
+  const mul=(a,b)=>{ const o=new Float32Array(16);
+    for(let c=0;c<4;c++) for(let r=0;r<4;r++)
+      o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+    return o; };
+  const persp=(f,asp,n,fa)=>{ const t=1/Math.tan(f/2); return new Float32Array(
+    [t/asp,0,0,0, 0,t,0,0, 0,0,(fa+n)/(n-fa),-1, 0,0,2*fa*n/(n-fa),0]); };
+  const siirto=(x,y,z)=> new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, x,y,z,1]);
+  const kiertoY=a=>{ const s=Math.sin(a),c=Math.cos(a); return new Float32Array(
+    [c,0,-s,0, 0,1,0,0, s,0,c,0, 0,0,0,1]); };
+  const kiertoX=a=>{ const s=Math.sin(a),c=Math.cos(a); return new Float32Array(
+    [1,0,0,0, 0,c,s,0, 0,-s,c,0, 0,0,0,1]); };
+
+  /* --- glTF-binääri --- */
+  function pura(b64){
+    const bin = atob(b64), n = bin.length, u = new Uint8Array(n);
+    for(let i=0;i<n;i++) u[i] = bin.charCodeAt(i);
+    const dv = new DataView(u.buffer);
+    let off = 12, J = null, BIN = null;
+    const pituus = dv.getUint32(8, true);
+    while(off < pituus){
+      const cl = dv.getUint32(off,true), ct = dv.getUint32(off+4,true);
+      if(ct === 0x4E4F534A) J = JSON.parse(new TextDecoder().decode(u.subarray(off+8,off+8+cl)));
+      if(ct === 0x004E4942) BIN = u.subarray(off+8, off+8+cl);
+      off += 8 + cl;
+    }
+    return {J:J, BIN:BIN};
+  }
+  const KOKO = {SCALAR:1, VEC2:2, VEC3:3, VEC4:4};
+  function lue(J, BIN, i){
+    const a = J.accessors[i], bv = J.bufferViews[a.bufferView];
+    const alku = BIN.byteOffset + (bv.byteOffset||0) + (a.byteOffset||0);
+    const m = KOKO[a.type] * a.count;
+    if(a.componentType === 5126) return new Float32Array(BIN.buffer, alku, m);
+    if(a.componentType === 5123) return new Uint16Array(BIN.buffer, alku, m);
+    if(a.componentType === 5125) return new Uint32Array(BIN.buffer, alku, m);
+    return new Uint8Array(BIN.buffer, alku, m);
+  }
+  /* Skannauksessa ei ole NORMAL-attribuuttia — lasketaan kärkinormaalit
+     kolmioiden normaalien summana. */
+  function normaalit(pos, idx){
+    const n = new Float32Array(pos.length);
+    for(let i=0;i<idx.length;i+=3){
+      const a=idx[i]*3, b=idx[i+1]*3, c=idx[i+2]*3;
+      const e1x=pos[b]-pos[a], e1y=pos[b+1]-pos[a+1], e1z=pos[b+2]-pos[a+2];
+      const e2x=pos[c]-pos[a], e2y=pos[c+1]-pos[a+1], e2z=pos[c+2]-pos[a+2];
+      const nx=e1y*e2z-e1z*e2y, ny=e1z*e2x-e1x*e2z, nz=e1x*e2y-e1y*e2x;
+      n[a]+=nx;n[a+1]+=ny;n[a+2]+=nz; n[b]+=nx;n[b+1]+=ny;n[b+2]+=nz;
+      n[c]+=nx;n[c+1]+=ny;n[c+2]+=nz;
+    }
+    for(let i=0;i<n.length;i+=3){
+      const l=Math.hypot(n[i],n[i+1],n[i+2])||1; n[i]/=l; n[i+1]/=l; n[i+2]/=l;
+    }
+    return n;
+  }
+
+  const VS = 'attribute vec3 aPos; attribute vec3 aNor; attribute vec2 aUV;'+
+    'uniform mat4 uMVP; varying vec3 vN; varying vec2 vUV;'+
+    'void main(){ vN=aNor; vUV=aUV; gl_Position=uMVP*vec4(aPos,1.0); }';
+  const FS = 'precision mediump float; varying vec3 vN; varying vec2 vUV;'+
+    'uniform sampler2D uTex; uniform float uTexMix; uniform float uViiva;'+
+    'void main(){'+
+    ' vec3 n=normalize(vN);'+
+    ' float lam=max(dot(n,normalize(vec3(0.35,0.82,0.45))),0.0);'+
+    ' float tay=max(dot(n,normalize(vec3(-0.5,0.1,-0.7))),0.0);'+
+    ' vec3 pohja=mix(vec3(0.60,0.585,0.55), texture2D(uTex,vUV).rgb, uTexMix);'+
+    ' vec3 c=pohja*(0.30+0.78*lam)+vec3(0.10,0.12,0.15)*tay;'+
+    ' if(uViiva>0.5) c=vec3(0.56,0.65,0.75);'+
+    ' gl_FragColor=vec4(c,1.0); }';
+
+  function kaanna(t, laji){ const s=gl.createShader(laji);
+    gl.shaderSource(s,t); gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s; }
+
+  function kaynnista(){
+    if(!window.SKANNI) return false;
+    gl = cv.getContext('webgl', {antialias:true, preserveDrawingBuffer:true, alpha:false})
+      || cv.getContext('experimental-webgl', {antialias:true, preserveDrawingBuffer:true});
+    if(!gl) return false;
+    try{
+      const {J, BIN} = pura(window.SKANNI);
+      ohjelma = gl.createProgram();
+      gl.attachShader(ohjelma, kaanna(VS, gl.VERTEX_SHADER));
+      gl.attachShader(ohjelma, kaanna(FS, gl.FRAGMENT_SHADER));
+      gl.linkProgram(ohjelma);
+      if(!gl.getProgramParameter(ohjelma, gl.LINK_STATUS))
+        throw new Error(gl.getProgramInfoLog(ohjelma));
+
+      let min=[1e9,1e9,1e9], max=[-1e9,-1e9,-1e9], kolmioita=0, karkia=0;
+      (J.meshes||[]).forEach(mesh=> mesh.primitives.forEach(p=>{
+        const pos = lue(J,BIN,p.attributes.POSITION);
+        const uv  = p.attributes.TEXCOORD_0!=null ? lue(J,BIN,p.attributes.TEXCOORD_0)
+                                                  : new Float32Array(pos.length/3*2);
+        const idx = lue(J,BIN,p.indices);
+        const nor = normaalit(pos, idx);
+        const acc = J.accessors[p.attributes.POSITION];
+        if(acc.min) for(let i=0;i<3;i++){ min[i]=Math.min(min[i],acc.min[i]); max[i]=Math.max(max[i],acc.max[i]); }
+        kolmioita += idx.length/3; karkia += pos.length/3;
+
+        const puskuri = d=>{ const b=gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,d,gl.STATIC_DRAW); return b; };
+        const eb = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eb);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+        /* rautalankaa varten omat särmäindeksit */
+        const reunat = new Uint16Array(idx.length*2);
+        for(let i=0,k=0;i<idx.length;i+=3){
+          reunat[k++]=idx[i];   reunat[k++]=idx[i+1];
+          reunat[k++]=idx[i+1]; reunat[k++]=idx[i+2];
+          reunat[k++]=idx[i+2]; reunat[k++]=idx[i]; }
+        const rb = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, rb);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, reunat, gl.STATIC_DRAW);
+
+        const osa = {pos:puskuri(pos), nor:puskuri(nor), uv:puskuri(uv),
+                     eb:eb, rb:rb, n:idx.length, nr:reunat.length, tex:harmaaTex()};
+        osat.push(osa);
+
+        /* tekstuuri JPEG-lohkosta */
+        const mat = J.materials && J.materials[p.material];
+        const ti = mat && mat.pbrMetallicRoughness && mat.pbrMetallicRoughness.baseColorTexture;
+        if(ti){
+          const img = J.images[J.textures[ti.index].source];
+          const bv = J.bufferViews[img.bufferView];
+          const blob = new Blob([BIN.subarray(bv.byteOffset||0, (bv.byteOffset||0)+bv.byteLength)],
+                                {type: img.mimeType || 'image/jpeg'});
+          const url = URL.createObjectURL(blob), el = new Image();
+          el.onload = ()=>{
+            gl.bindTexture(gl.TEXTURE_2D, osa.tex);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, el);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+            URL.revokeObjectURL(url);
+          };
+          el.src = url;
+        }
+      }));
+
+      keskus = [(min[0]+max[0])/2, (min[1]+max[1])/2, (min[2]+max[2])/2];
+      sade = Math.max(max[0]-min[0], max[1]-min[1], max[2]-min[2]) / 2 || 3;
+      /* 3/4-kulma hieman ylhäältä: näin skannauksesta lukee sekä tilan
+         muoto että se, että reunat ovat repaleiset. Sisältä katsottuna
+         näkyisi vain yksi sumea seinä. */
+      etaisyys = sade * 2.2;
+
+      /* oikeat luvut Chiselin tilastoihin */
+      const st = document.querySelector('#chisel .stats');
+      if(st) st.innerHTML = 'SCAN_waste_room_01 · Verts <b>'+karkia.toLocaleString('fi-FI')+
+        '</b> · Tris <b>'+kolmioita.toLocaleString('fi-FI')+'</b><br>'+
+        'LiDAR · ei normaaleja · UV0 · 2 tekstuurisettiä';
+
+      gl.enable(gl.DEPTH_TEST);
+      gl.clearColor(0.055,0.065,0.078,1);
+      cv.classList.add('on');
+      document.getElementById('chisel').classList.add('gl');
+      hiiri(); requestAnimationFrame(silmukka); kehys(0);
+      return true;
+    }catch(e){ console.warn('skanni:', e.message); return false; }
+  }
+  function harmaaTex(){
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,1,1,0,gl.RGB,gl.UNSIGNED_BYTE,
+      new Uint8Array([150,146,138]));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    return t;
+  }
+  function hiiri(){
+    cv.addEventListener('mousedown', e=>{ raahaa=true; hx=e.clientX; hy=e.clientY;
+      cv.classList.add('drag'); autoAika = 4; });
+    addEventListener('mouseup', ()=>{ raahaa=false; cv.classList.remove('drag'); });
+    addEventListener('mousemove', e=>{
+      if(!raahaa) return;
+      yaw   += (e.clientX-hx) * 0.008;
+      pitch += (e.clientY-hy) * 0.006;
+      pitch = Math.max(-1.35, Math.min(1.35, pitch));
+      hx=e.clientX; hy=e.clientY; autoAika = 4;
+    });
+    cv.addEventListener('wheel', e=>{ e.preventDefault();
+      etaisyys = Math.max(sade*0.12, Math.min(sade*6, etaisyys * (1 + Math.sign(e.deltaY)*0.09)));
+    }, {passive:false});
+  }
+
+  let edellinen = 0;
+  function silmukka(t){
+    requestAnimationFrame(silmukka);
+    const dt = Math.min(0.05, (t - edellinen)/1000) || 0; edellinen = t;
+    if(!document.getElementById('chisel').classList.contains('on')) return;  // ei piirretä piilossa
+    kehys(dt);
+  }
+  /* Yksi kehys erillään silmukasta: näin näkymä voidaan pakottaa
+     piirtymään heti kun Chisel tulee näkyviin, eikä se jää
+     requestAnimationFramen varaan. */
+  function kehys(dt){
+    dt = dt || 0;
+    if(autoAika > 0) autoAika -= dt; else yaw += dt * 0.11;   // hidas kierto
+
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if(!w || !h) return;
+    const dpr = Math.min(2, devicePixelRatio||1);
+    const pw = Math.round(w*dpr), ph = Math.round(h*dpr);
+    if(cv.width !== pw || cv.height !== ph){ cv.width = pw; cv.height = ph; }
+    gl.viewport(0,0,pw,ph);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const P = persp(0.86, w/h, sade*0.02, sade*40);
+    const V = mul(mul(siirto(0,0,-etaisyys), mul(kiertoX(pitch), kiertoY(yaw))),
+                  siirto(-keskus[0],-keskus[1],-keskus[2]));
+    const MVP = mul(P, V);
+
+    const tila = document.getElementById('chisel-view').className;
+    const rauta = tila.indexOf('shade-wire') >= 0;
+    const teksturoitu = tila.indexOf('shade-mat') >= 0;
+
+    gl.useProgram(ohjelma);
+    gl.uniformMatrix4fv(gl.getUniformLocation(ohjelma,'uMVP'), false, MVP);
+    gl.uniform1f(gl.getUniformLocation(ohjelma,'uTexMix'), teksturoitu ? 1 : 0);
+    gl.uniform1f(gl.getUniformLocation(ohjelma,'uViiva'), rauta ? 1 : 0);
+    gl.uniform1i(gl.getUniformLocation(ohjelma,'uTex'), 0);
+    const aP=gl.getAttribLocation(ohjelma,'aPos'), aN=gl.getAttribLocation(ohjelma,'aNor'),
+          aU=gl.getAttribLocation(ohjelma,'aUV');
+    osat.forEach(o=>{
+      gl.bindBuffer(gl.ARRAY_BUFFER,o.pos); gl.enableVertexAttribArray(aP);
+      gl.vertexAttribPointer(aP,3,gl.FLOAT,false,0,0);
+      gl.bindBuffer(gl.ARRAY_BUFFER,o.nor); gl.enableVertexAttribArray(aN);
+      gl.vertexAttribPointer(aN,3,gl.FLOAT,false,0,0);
+      gl.bindBuffer(gl.ARRAY_BUFFER,o.uv);  gl.enableVertexAttribArray(aU);
+      gl.vertexAttribPointer(aU,2,gl.FLOAT,false,0,0);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, o.tex);
+      if(rauta){
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.rb);
+        gl.drawElements(gl.LINES, o.nr, gl.UNSIGNED_SHORT, 0);
+      }else{
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,o.eb);
+        gl.drawElements(gl.TRIANGLES, o.n, gl.UNSIGNED_SHORT, 0);
+      }
+    });
+  }
+  return {kaynnista:kaynnista, kehys:kehys, canvas:cv};
+})();
+if(!Skanni.kaynnista())
+  console.warn('LiDAR-skannaus ei käynnistynyt — Chisel näyttää paikkamerkin');
+
+/* ============================================================
    PATINA — tasot, näkyvyys ja kanavat
    ============================================================ */
 const TASOT = [
@@ -1947,7 +2233,7 @@ document.getElementById('dp-get').onclick = ()=>
    ============================================================ */
 const CUES = [
   {n:'perustila — työpöytä'},
-  {n:'SOVELLUSVILINÄ'},
+  {n:'SOFTAT — ←/→ vaihtaa'},
   {n:'ILMOITUS 1 — 3 NEW URGENT REQUESTS'},
   {n:'PELIMOOTTORI — jätehuone'},
   {n:'ILMOITUS 2 — 13 (laukeaa myös hiiren liikkeestä)'},
@@ -1963,26 +2249,26 @@ function goto(n){
 
   /* Jokainen cue on itsenäinen tila: saman numeron painaminen
      uudestaan tuottaa saman kuvan eikä kasaa ilmoituksia. */
-  if(n===0){ stopFlurry(); clearNotes(); hideAll(); fillTickets(3);
+  if(n===0){ clearNotes(); hideAll(); fillTickets(3);
              asetaKello(KELLO_ALKU); nollaaTickr();
              glitchJatkuva = false; clearTimeout(glitchTimer); glitchPois();
              setPlay(false); naytaDock('console'); }
 
-  if(n===1){ clearNotes(); startFlurry(); }
+  if(n===1){ clearNotes(); selausIdx = 0; show(JARJESTYS[0]); }
 
-  if(n===2){ stopFlurry(); clearNotes(); show('klatter'); avaaKanava('build-fails');
+  if(n===2){ clearNotes(); show('klatter'); avaaKanava('build-fails');
     note('3 NEW URGENT REQUESTS', 'Bug report… 331 known issues… fatal error.'); }
 
-  if(n===3){ stopFlurry(); clearNotes(); show('engine'); valitse('wall_stain_a'); }
+  if(n===3){ clearNotes(); show('engine'); valitse('wall_stain_a'); }
 
-  if(n===4){ stopFlurry(); clearNotes(); show('engine');
+  if(n===4){ clearNotes(); show('engine');
     note('13 NEW URGENT REQUESTS', null, true); }
 
   /* Kello 3:31 ilmoitus 2:n ollessa vielä ruudulla — ei tyhjennystä.
      Pakottaa lopputilan, jos operaattori ei halua odottaa kellon kulkua. */
   if(n===5){ asetaKello(KELLO_LOPPU, true); }
 
-  if(n===6){ stopFlurry(); clearNotes(); show('backloggr'); fillTickets(31);
+  if(n===6){ clearNotes(); show('backloggr'); fillTickets(31);
     note('31 URGENT REQUESTS', null, true); }
 }
 addEventListener('mousemove', ()=>{ if(armMouse){ armMouse=false; goto(4); } });
@@ -2002,8 +2288,8 @@ addEventListener('keydown', e=>{
   const k = e.key.toLowerCase();
   if(k===' '){ e.preventDefault(); goto(Math.min(cue+1, CUES.length-1)); }
   else if(k>='0' && k<='6'){ goto(+k); }
-  else if(k==='arrowright'){ flurrySpeed = Math.min(3, flurrySpeed+0.1); updSpeed(); }
-  else if(k==='arrowleft'){  flurrySpeed = Math.max(0.3, flurrySpeed-0.1); updSpeed(); }
+  else if(k==='arrowright'){ e.preventDefault(); selaa(1); }
+  else if(k==='arrowleft'){  e.preventDefault(); selaa(-1); }
   else if(k===']'){ setBri(bri + 0.05); }
   else if(k==='['){ setBri(bri - 0.05); }
   else if(k==='c'){ const off = document.body.classList.toggle('nocursor');
@@ -2023,7 +2309,6 @@ addEventListener('keydown', e=>{
   else if(k==='a'){ armMouse = true;
     document.getElementById('hudName').textContent = 'ODOTTAA HIIREN LIIKETTÄ → cue 4'; }
 });
-function updSpeed(){ document.getElementById('hudSpeed').textContent = flurrySpeed.toFixed(1)+'×'; }
 
 /* ============================================================
    ALUSTUS

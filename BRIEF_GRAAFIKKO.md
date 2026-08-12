@@ -71,7 +71,7 @@ työkalujen logiikalla. Sukulaisuus riittää — **kopio ei käy** (ks. kohta 6
 | Sovellus | Vastine todellisuudessa | Rooli kohtauksessa |
 |---|---|---|
 | **VESSEL ENGINE 9.4** | pelimoottori | Miken päätyökalu. Jätehuone on tässä auki |
-| **CHISEL 4.2** | 3D-mallinnusohjelma | Roskasäiliön mallinnus, wireframe näkyvissä |
+| **CHISEL 4.2** | 3D-mallinnusohjelma | **Oikea LiDAR-skannaus roskahuoneesta** pyörii WebGL:llä. Ei tarvitse grafiikkaa |
 | **PATINA 8** | materiaalimaalausohjelma | Tästä lika tulee. Tasoina: valumat, ruoste, home |
 | **DEPOT** | versionhallinta | Kollega on lukinnut tiedoston. Mike ei pääse eteenpäin |
 | **KLATTER** | chat | Kaikki huutavat yhtä aikaa. Näyttelijä voi vastata |
@@ -79,9 +79,9 @@ työkalujen logiikalla. Sukulaisuus riittää — **kopio ei käy** (ks. kohta 6
 | **POSTHAUS** | sähköposti | 2 431 lukematonta, ylimpänä automaattiset build-virheet |
 | **TICKR** | tuntikirjaus | 71 h viikossa, ylityötä +31 h |
 
-Vilinässä (cue 1) kukin on ruudulla 0,34–1,1 sekuntia. Ne luetaan **siluettina ja
-värinä**, eivät sisältönä. Siksi jokaisella on oma tunnusvärinsä ja oma
-paneelirytminsä — ne ovat tärkeämpiä kuin yksityiskohdat.
+Cuessa 1 operaattori selaa softia käsin, usein nopeasti. Ne luetaan silloin
+**siluettina ja värinä**, eivät sisältönä. Siksi jokaisella on oma tunnusvärinsä
+ja oma paneelirytminsä — ne ovat tärkeämpiä kuin yksityiskohdat.
 
 Nykyiset tunnusvärit:
 
@@ -179,7 +179,7 @@ tuotetta.
 | Cue | Näkyvä | Tapahtuma |
 |---|---|---|
 | 0 | `desktop.png` | Perustila, kello 3:28 |
-| 1 | kaikki 8 sovellusta | **Vilinä** — 1,1 s → 0,34 s, kiihtyen |
+| 1 | kaikki 8 sovellusta | Operaattori selaa softia käsin ←/→ |
 | 2 | Klatter | Ilmoitus: "3 NEW URGENT REQUESTS" |
 | 3 | Vessel Engine + jätehuone | Mike työstää kohtausta |
 | 4 | sama | Mike herää mikrounesta → "13 NEW URGENT REQUESTS" |
@@ -215,7 +215,7 @@ Ohjauspalkki on ruudun yläreunassa. **Piilota se `H`:lla ennen ottoa.**
 ```
 VÄLILYÖNTI  seuraava cue        A  viritä hiirilaukaisu (cue 4)
 0–6         hyppää cueen        B  musta ruutu (ottojen väli)
-←/→         vilinän nopeus      C  kursori piiloon / näkyviin
+←/→         selaa softia        C  kursori piiloon / näkyviin
 [  ]        ruudun kirkkaus     K  kello +1 min (3:31 → 3:26)
 R           alkuun              G X Y Z  glitchit  (⇧ = jatkuva)
 H           piilota palkki      V  chatin autovastaus pois

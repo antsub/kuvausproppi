@@ -4,7 +4,9 @@ Selaimessa ajettava kuvausproppi: peligraafikon työasema yövuorossa. Kahdeksan
 keksittyä ohjelmaa, klikattava käyttöliittymä ja näppäimistöltä ajettava
 seitsemän cuen kohtaus.
 
-Ei asennuksia, ei nettiyhteyttä, ei palvelinta. Yksi HTML-tiedosto.
+Ei asennuksia, ei nettiyhteyttä, ei palvelinta. Avaa `proppi.html` selaimessa.
+Mukana on oikea LiDAR-skannaus roskahuoneesta, joka pyörii 3D-ohjelman
+näkymässä — se tarvitsee `assets/skanni.js`-tiedoston vierelleen.
 
 ---
 
@@ -27,7 +29,7 @@ Sama näppäin tuo sen takaisin.
 | Cue | Mitä ruudulla tapahtuu |
 |:---:|---|
 | **0** | Työpöytä, kello 3:28 |
-| **1** | Sovellusvilinä — 8 ohjelmaa vaihtuu kiihtyen 1,1 s → 0,34 s |
+| **1** | Softat — selaa **←/→** tai klikkaa tehtäväpalkkia |
 | **2** | Klatter + ilmoitus "3 NEW URGENT REQUESTS" |
 | **3** | Vessel Engine, jätehuone auki |
 | **4** | Ilmoitus "13 NEW URGENT REQUESTS" |
@@ -58,7 +60,7 @@ kiertävät 00–59, tunnit ja minuutit eivät liiku.
 ```
 VÄLILYÖNTI  seuraava cue        A  viritä hiirilaukaisu (cue 4)
 0–6         hyppää cueen        B  musta ruutu (ottojen väli)
-←  →        vilinän nopeus      C  kursori piiloon / näkyviin
+←  →        selaa softia        C  kursori piiloon / näkyviin
 [  ]        ruudun kirkkaus     K  kello +1 min (3:31 → 3:26)
 R           alkuun              G X Y Z  glitchit  (⇧ = jatkuva)
 H           piilota palkki      V  chatin autovastaus pois
@@ -96,6 +98,27 @@ joten kahta samanlaista ottoa ei tule.
 Glitch ei koskaan välähdä puhtaan valkoisena eikä mustana, joten se ei pala puhki
 eikä katoa. Ohjauspalkki jää glitchin ulkopuolelle, jotta operaattori näkee
 tilansa koko ajan. `R` ja cue 0 nollaavat myös glitchin.
+
+### Softien selaus
+
+**Automaattista ajastettua vaihtoa ei ole.** Rytmin tekee operaattori käsin
+**←/→**-näppäimillä tai näyttelijä klikkaamalla tehtäväpalkkia, jotta vaihdot
+osuvat siihen mitä kuvassa tapahtuu. Nykyinen softa lukee ohjauspalkissa.
+
+### 3D-skannaus
+
+Chiselissä pyörii **oikea LiDAR-skannaus roskahuoneesta** (17 104 kolmiota,
+2048²-tekstuurit). Se on aito WebGL-piirto, ei kuva: näkymä kiertyy hitaasti
+itsestään, ja **hiirellä raahaamalla sitä voi pyörittää, rullalla zoomata**.
+Näyttelijä voi siis oikeasti tutkia skannausta kesken oton.
+
+Toolbarin **Wireframe / Solid / Material** vaihtavat piirtotavan. Material
+näyttää tekstuurit, Solid pelkän muodon, Wireframe rautalangan.
+
+Skannaus on upotettu `assets/skanni.js`-tiedostoon base64-muodossa. Syy: selain
+estää `fetch()`-haut `file://`-osoitteesta, joten erillisenä `.glb`-tiedostona
+se ei latautuisi ilman palvelinta — ja proppi pitää voida avata suoraan
+tiedostosta.
 
 ### 5. Näyttelijä voi klikkailla
 
@@ -139,9 +162,10 @@ Ei koodimuutoksia. Täydet ohjeet: **[BRIEF_GRAAFIKKO.md](BRIEF_GRAAFIKKO.md)**
 ## Tiedostot
 
 ```
-proppi.html          Koko proppi. Ainoa tiedosto, jota tarvitaan ajamiseen.
+proppi.html          Koko proppi.
 index.html           Aloitussivu (vain verkkoversiota varten)
 BRIEF_GRAAFIKKO.md   Ohjeet graafikolle
+assets/skanni.js     LiDAR-skannaus (1,3 MB) — tarvitaan 3D-näkymään
 assets/              Kuvat — pudota tänne
 ```
 
