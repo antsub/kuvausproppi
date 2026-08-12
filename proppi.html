@@ -1884,7 +1884,7 @@ document.querySelectorAll('#chisel .tool[data-cs]').forEach(t=> t.onclick = ()=>
 const Skanni = window.Skanni = (function(){
   const cv = document.getElementById('scanCanvas');
   let gl=null, ohjelma=null, osat=[], keskus=[0,0,0], sade=3;
-  let yaw=0.75, pitch=-0.30, etaisyys=8, raahaa=false, hx=0, hy=0, autoAika=0;
+  let yaw=0.75, pitch=0.55, etaisyys=8, raahaa=false, hx=0, hy=0, autoAika=0;
 
   /* --- matriisit (sarakejärjestys, kuten WebGL odottaa) --- */
   const mul=(a,b)=>{ const o=new Float32Array(16);
@@ -1949,10 +1949,14 @@ const Skanni = window.Skanni = (function(){
     'uniform sampler2D uTex; uniform float uTexMix; uniform float uViiva;'+
     'void main(){'+
     ' vec3 n=normalize(vN);'+
-    ' float lam=max(dot(n,normalize(vec3(0.35,0.82,0.45))),0.0);'+
-    ' float tay=max(dot(n,normalize(vec3(-0.5,0.1,-0.7))),0.0);'+
-    ' vec3 pohja=mix(vec3(0.60,0.585,0.55), texture2D(uTex,vUV).rgb, uTexMix);'+
-    ' vec3 c=pohja*(0.30+0.78*lam)+vec3(0.10,0.12,0.15)*tay;'+
+    /* Puolipallovalo: ylöspäin osoittavat pinnat vaaleampia. Tasainen
+       valaistus, jotta skannauksen tekstuuri lukeutuu — suuntavalo
+       jättäisi puolet seinistä pimeäksi. */
+    ' float yla=n.y*0.5+0.5;'+
+    ' vec3 valo=mix(vec3(0.62,0.60,0.58), vec3(1.06,1.05,1.02), yla);'+
+    ' float muoto=max(dot(n,normalize(vec3(0.3,0.75,0.55))),0.0);'+
+    ' vec3 pohja=mix(vec3(0.68,0.665,0.64), texture2D(uTex,vUV).rgb, uTexMix);'+
+    ' vec3 c=pohja*(valo+0.16*muoto);'+
     ' if(uViiva>0.5) c=vec3(0.56,0.65,0.75);'+
     ' gl_FragColor=vec4(c,1.0); }';
 
@@ -2028,10 +2032,11 @@ const Skanni = window.Skanni = (function(){
 
       keskus = [(min[0]+max[0])/2, (min[1]+max[1])/2, (min[2]+max[2])/2];
       sade = Math.max(max[0]-min[0], max[1]-min[1], max[2]-min[2]) / 2 || 3;
-      /* 3/4-kulma hieman ylhäältä: näin skannauksesta lukee sekä tilan
-         muoto että se, että reunat ovat repaleiset. Sisältä katsottuna
-         näkyisi vain yksi sumea seinä. */
-      etaisyys = sade * 2.2;
+      /* Nukkekotikulma: takapintojen karsinta poistaa katsojaa lähimmät
+         seinät ja katon, jolloin huoneeseen näkee sisään. Kulma ja etäisyys
+         on haettu renderöimällä malli erikseen samalla kameramatematiikalla
+         ja vertaamalla skannaussovelluksen omaan näkymään. */
+      etaisyys = sade * 2.6;
 
       /* oikeat luvut Chiselin tilastoihin */
       const st = document.querySelector('#chisel .stats');
@@ -2040,7 +2045,13 @@ const Skanni = window.Skanni = (function(){
         'LiDAR · ei normaaleja · UV0 · 2 tekstuurisettiä';
 
       gl.enable(gl.DEPTH_TEST);
-      gl.clearColor(0.055,0.065,0.078,1);
+      /* Skannauksen pinnat osoittavat sisäänpäin (skanneriin päin). Kun
+         takapinnat karsitaan, katsojaa lähimmät seinät ja katto katoavat
+         ja huoneeseen näkee sisään — sama nukkekotinäkymä kuin
+         skannaussovelluksen omassa katselimessa. */
+      gl.enable(gl.CULL_FACE);
+      gl.cullFace(gl.BACK);
+      gl.clearColor(0.15,0.15,0.16,1);
       cv.classList.add('on');
       document.getElementById('chisel').classList.add('gl');
       hiiri(); requestAnimationFrame(silmukka); kehys(0);
@@ -2128,7 +2139,15 @@ const Skanni = window.Skanni = (function(){
       }
     });
   }
-  return {kaynnista:kaynnista, kehys:kehys, canvas:cv};
+  /* Kameran asetus ulkoa: näin aloituskuva voidaan hakea kokeilemalla ja
+     ohjaaja voi halutessaan lukita tietyn kulman ottoa varten. */
+  function kamera(y,p,d){
+    if(y!=null) yaw=y; if(p!=null) pitch=p;
+    if(d!=null) etaisyys=sade*d;
+    autoAika=4; kehys(0);
+    return {yaw:+yaw.toFixed(2), pitch:+pitch.toFixed(2), dist:+(etaisyys/sade).toFixed(2)};
+  }
+  return {kaynnista:kaynnista, kehys:kehys, kamera:kamera, canvas:cv};
 })();
 if(!Skanni.kaynnista())
   console.warn('LiDAR-skannaus ei käynnistynyt — Chisel näyttää paikkamerkin');
