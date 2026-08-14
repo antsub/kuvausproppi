@@ -1,2 +1,2 @@
 # Pudota grafiikat tähän kansioon.
-# Ks. ../BRIEF_GRAAFIKKO.md
+# Tiedostonimet ja mitat: ../README.md

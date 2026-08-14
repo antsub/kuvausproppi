@@ -148,7 +148,7 @@ pelimoottorista, sammuttaa likakerroksia materiaaliohjelmasta ja avata tikettej�
 ## Grafiikan lisääminen
 
 Pudota kuvat `assets/`-kansioon, ne korvaavat paikkamerkit automaattisesti.
-Ei koodimuutoksia. Täydet ohjeet: **[BRIEF_GRAAFIKKO.md](BRIEF_GRAAFIKKO.md)**
+Ei koodimuutoksia.
 
 | Tiedosto | Koko |
 |---|---|
@@ -157,6 +157,11 @@ Ei koodimuutoksia. Täydet ohjeet: **[BRIEF_GRAAFIKKO.md](BRIEF_GRAAFIKKO.md)**
 | `desktop.png` | 1920×1080 |
 | `icon_klatter.png` … `icon_backloggr.png` | 68×68, 8 kpl |
 
+Jätehuone-render sijoittuu kohtaan x 290, y 130. Kaksi sääntöä, jotka
+eivät ole makuasioita: **ei puhdasta valkoista** (kirkkain `#C8D0D8`, muuten
+palaa kamerassa puhki) eikä **puhdasta mustaa** (tummin `#0E1116`, muuten
+ruutu ei valaise näyttelijän kasvoja).
+
 ---
 
 ## Tiedostot
@@ -164,7 +169,6 @@ Ei koodimuutoksia. Täydet ohjeet: **[BRIEF_GRAAFIKKO.md](BRIEF_GRAAFIKKO.md)**
 ```
 proppi.html          Koko proppi.
 index.html           Aloitussivu (vain verkkoversiota varten)
-BRIEF_GRAAFIKKO.md   Ohjeet graafikolle
 assets/skanni.js     LiDAR-skannaus (1,3 MB) — tarvitaan 3D-näkymään
 assets/              Kuvat — pudota tänne
 ```
